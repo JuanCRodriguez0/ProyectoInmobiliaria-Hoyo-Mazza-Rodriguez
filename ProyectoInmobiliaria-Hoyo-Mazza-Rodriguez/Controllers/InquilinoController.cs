@@ -3,11 +3,11 @@ using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
 namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 {
-    public class InquilinosController : Controller
+    public class InquilinoController : Controller
     {
         private readonly RepositorioInquilino repositorioInquilino;
 
-        public InquilinosController(IConfiguration configuration)
+        public InquilinoController(IConfiguration configuration)
         {
             repositorioInquilino = new RepositorioInquilino(configuration);
         }
