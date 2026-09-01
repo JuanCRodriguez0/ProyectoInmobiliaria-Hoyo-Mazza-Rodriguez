@@ -92,8 +92,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"INSERT INTO propietarios (Dni, Nombre, Apellido, FechaNacimiento, Direccion, Telefono, Email) 
-                            VALUES (@dni, @nombre, @apellido, @fechaNacimiento, @direccion, @telefono, @email);
+                var sql = @"INSERT INTO propietarios (Dni, Nombre, Apellido, FechaNacimiento, Direccion, Telefono, Email, Estado) 
+                            VALUES (@dni, @nombre, @apellido, @fechaNacimiento, @direccion, @telefono, @email, @estado);
                             SELECT LAST_INSERT_ID();";
 
                 using (var command = new MySqlCommand(sql, connection))
@@ -105,6 +105,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     command.Parameters.AddWithValue("@direccion", propietario.Direccion);
                     command.Parameters.AddWithValue("@telefono", propietario.Telefono);
                     command.Parameters.AddWithValue("@email", propietario.Email);
+                    command.Parameters.AddWithValue("@estado", true);
 
                     connection.Open();
                     res = Convert.ToInt32(command.ExecuteScalar());
