@@ -30,6 +30,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         [EmailAddress]
         public string Email { get; set; } = "";
 
-        //public List<Inmueble> Inmuebles { get; set; } = new List<Inmueble>();
+        
     }
 }

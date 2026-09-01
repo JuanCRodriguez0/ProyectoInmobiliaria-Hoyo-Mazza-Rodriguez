@@ -49,8 +49,8 @@
         </dd>
     </dl>
     
-    <form asp-action="Delete">
-        <input type="submit" value="Delete" class="btn btn-danger" asp-controller="Home" asp-action="Index" /> |
-        <a asp-action="Index" asp-controller="Home">Volver al listado</a>
+    <form asp-action="Delete" asp-asp-route="@Model.IdPropietario">
+        <input type="submit" value="Delete" class="btn btn-danger"  /> |
+        <a asp-action="Index" asp-controller="Propietario">Volver al listado</a>
     </form>
 </div>
