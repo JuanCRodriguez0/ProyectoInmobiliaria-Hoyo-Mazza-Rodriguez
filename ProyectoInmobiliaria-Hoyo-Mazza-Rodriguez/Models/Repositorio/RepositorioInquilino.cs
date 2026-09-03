@@ -20,7 +20,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             using (var connection = new MySqlConnection(connectionString))
             {
                 var sql = @"SELECT IdInquilino, Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo 
-                            FROM inquilinos";
+                            FROM inquilinos WHERE estado = 1" ;
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -94,8 +94,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"INSERT INTO inquilinos (Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo) 
-                            VALUES (@dni, @nombre, @apellido, @fechaNacimiento, @telefono, @email, @garantes, @sueldo);
+                var sql = @"INSERT INTO inquilinos (Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo, estado) 
+                            VALUES (@dni, @nombre, @apellido, @fechaNacimiento, @telefono, @email, @garantes, @sueldo, @estado);
                             SELECT LAST_INSERT_ID();";
 
                 using (var command = new MySqlCommand(sql, connection))
@@ -108,6 +108,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     command.Parameters.AddWithValue("@email", inquilino.Email);
                     command.Parameters.AddWithValue("@garantes", inquilino.Garantes);
                     command.Parameters.AddWithValue("@sueldo", inquilino.Sueldo);
+                    command.Parameters.AddWithValue("@estado", true);
 
                     connection.Open();
                     res = Convert.ToInt32(command.ExecuteScalar());
@@ -161,8 +162,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"DELETE FROM inquilinos WHERE IdInquilino = @id";
-
+                var sql = @"UPDATE inquilinos SET estado = 0 WHERE idInquilino = @id ";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);

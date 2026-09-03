@@ -9,7 +9,7 @@
 	<div class="col-md-4">
 		<form asp-action="Edit">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-			<input type="hidden" name="IdPropietario" value="@Model.IdInquilino" />
+			<input type="hidden" name="idInquilino" value="@Model.IdInquilino" />
 			<div class="form-group">
 				<label asp-for="Nombre" class="control-label"></label>
 				<input asp-for="Nombre" class="form-control" />
@@ -35,6 +35,21 @@
 				<input asp-for="Email" class="form-control" />
 				<span asp-validation-for="Email" class="text-danger"></span>
 			</div>
+			<div class="form-group">
+                <label asp-for="Sueldo" class="control-label"></label>
+                <input asp-for="Sueldo" class="form-control" />
+                <span asp-validation-for="Sueldo" class="text-danger"></span>
+            </div>
+			<div class="form-group">
+                 <label asp-for="FechaNacimiento" class="control-label"></label>
+                 <input asp-for="FechaNacimiento" class="form-control" />
+                 <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Garantes" class="control-label"></label>
+                <input asp-for="Garantes" class="form-control" />
+                <span asp-validation-for="Garantes" class="text-danger"></span>
+            </div>
 			<div class="form-group">
 				<input type="submit" value="Guardar" class="btn btn-primary" />
 			</div>
