@@ -1,3 +1,4 @@
+-- 1) Crear BD
 CREATE DATABASE IF NOT EXISTS inmobiliaria
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -45,6 +46,7 @@ INSERT INTO inquilinos (dni, nombre, apellido, fechaNacimiento, telefono, email,
 ('35777888', 'Carlos', 'Diaz',  '1995-01-10', '3519998888', 'carlos.diaz@mail.com', 'Perez Juan - 30111222', 450000.00),
 ('36999000', 'Ana',    'Lopez', '1998-06-30', '3512223344', 'ana.lopez@mail.com',   'Gomez Maria - 28555666', 380000.00);
 
+-- 4) Tabla Inmuebles
 DROP TABLE IF EXISTS tipos_inmueble;
 CREATE TABLE tipos_inmueble (
     idTipoInmueble  INT AUTO_INCREMENT PRIMARY KEY,

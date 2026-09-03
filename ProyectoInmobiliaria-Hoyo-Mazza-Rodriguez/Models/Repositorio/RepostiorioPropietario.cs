@@ -20,7 +20,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             using (var connection = new MySqlConnection(connectionString))
             {
                 var sql = @"SELECT IdPropietario, Dni, Nombre, Apellido, FechaNacimiento, Direccion, Telefono, Email 
-                            FROM propietarios";
+                            FROM propietarios WHERE Estado = 1";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
