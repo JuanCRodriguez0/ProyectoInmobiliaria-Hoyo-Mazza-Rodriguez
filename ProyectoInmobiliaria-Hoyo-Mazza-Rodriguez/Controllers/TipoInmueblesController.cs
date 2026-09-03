@@ -98,7 +98,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         {
             if (repositorioTipoInmueble.TieneInmuebles(id))
             {
-                ModelState.AddModelError("", "No se puede eliminar: hay inmuebles cargados con este tipo.");
                 var tipo = repositorioTipoInmueble.ObtenerPorId(id);
                 ViewBag.TieneInmuebles = true;
                 return View("Delete", tipo);

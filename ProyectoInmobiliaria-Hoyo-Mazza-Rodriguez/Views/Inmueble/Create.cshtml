@@ -1,0 +1,77 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Nuevo Inmueble";
+}
+
+<h1>Nuevo Inmueble</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="IdPropietario">Propietario</label>
+        <select asp-for="IdPropietario" class="form-control"
+                asp-items="@(new SelectList(ViewBag.Propietarios, "IdPropietario", "Nombre"))">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="IdPropietario" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IdTipoInmueble">Tipo</label>
+        <select asp-for="IdTipoInmueble" class="form-control"
+                asp-items="@(new SelectList(ViewBag.Tipos, "IdTipoInmueble", "Descripcion"))">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="IdTipoInmueble" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Direccion"></label>
+        <input asp-for="Direccion" class="form-control" />
+        <span asp-validation-for="Direccion" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Cupo"></label>
+        <input asp-for="Cupo" class="form-control" />
+        <span asp-validation-for="Cupo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Ambientes"></label>
+        <input asp-for="Ambientes" class="form-control" />
+        <span asp-validation-for="Ambientes" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Superficie"></label>
+        <input asp-for="Superficie" class="form-control" />
+        <span asp-validation-for="Superficie" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="PrecioPorDia"></label>
+        <input asp-for="PrecioPorDia" class="form-control" />
+        <span asp-validation-for="PrecioPorDia" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Latitud"></label>
+        <input asp-for="Latitud" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Longitud"></label>
+        <input asp-for="Longitud" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

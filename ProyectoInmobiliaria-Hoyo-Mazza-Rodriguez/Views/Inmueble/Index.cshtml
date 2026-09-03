@@ -1,0 +1,48 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
+
+@{
+    ViewData["Title"] = "Inmuebles";
+}
+
+<h1>Inmuebles</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nuevo Inmueble</a>
+</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Tipo</th>
+            <th>Propietario</th>
+            <th>Cupo</th>
+            <th>Precio/día</th>
+            <th>Disponible</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Direccion</td>
+                <td>@item.DescripcionTipo</td>
+                <td>@item.NombrePropietario</td>
+                <td>@item.Cupo</td>
+                <td>@item.PrecioPorDia.ToString("C")</td>
+                <td>@(item.Disponible ? "Sí" : "Suspendido")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-info">Detalles</a>
+                    <a asp-action="Edit" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

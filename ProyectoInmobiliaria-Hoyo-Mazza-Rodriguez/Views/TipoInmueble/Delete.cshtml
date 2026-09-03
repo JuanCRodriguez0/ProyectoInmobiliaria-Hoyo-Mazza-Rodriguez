@@ -6,6 +6,13 @@
 
 <h1>¿Eliminar este tipo de inmueble?</h1>
 
+@if (ViewBag.TieneInmuebles == true)
+{
+    <div class="alert alert-warning">
+        Este tipo tiene inmuebles cargados y no se puede eliminar.
+    </div>
+}
+
 <dl class="row">
     <dt class="col-sm-3">Descripción</dt>
     <dd class="col-sm-9">@Model.Descripcion</dd>
@@ -13,6 +20,6 @@
 
 <form asp-action="Delete">
     <input type="hidden" asp-for="IdTipoInmueble" />
-    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <button type="submit" class="btn btn-danger" disabled="@(ViewBag.TieneInmuebles == true)">Eliminar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>

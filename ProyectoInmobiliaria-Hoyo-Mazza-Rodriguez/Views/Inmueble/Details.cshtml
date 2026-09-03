@@ -1,0 +1,42 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble
+
+@{
+    ViewData["Title"] = "Detalle del Inmueble";
+}
+
+<h1>Detalle del Inmueble</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Dirección</dt>
+    <dd class="col-sm-9">@Model.Direccion</dd>
+
+    <dt class="col-sm-3">Propietario</dt>
+    <dd class="col-sm-9">@Model.NombrePropietario</dd>
+
+    <dt class="col-sm-3">Tipo</dt>
+    <dd class="col-sm-9">@Model.DescripcionTipo</dd>
+
+    <dt class="col-sm-3">Cupo</dt>
+    <dd class="col-sm-9">@Model.Cupo</dd>
+
+    <dt class="col-sm-3">Ambientes</dt>
+    <dd class="col-sm-9">@Model.Ambientes</dd>
+
+    <dt class="col-sm-3">Superficie</dt>
+    <dd class="col-sm-9">@Model.Superficie m²</dd>
+
+    <dt class="col-sm-3">Precio por día</dt>
+    <dd class="col-sm-9">@Model.PrecioPorDia.ToString("C")</dd>
+
+    <dt class="col-sm-3">Disponible</dt>
+    <dd class="col-sm-9">@(Model.Disponible ? "Sí" : "Suspendido por el propietario")</dd>
+
+    @if (Model.Latitud != null && Model.Longitud != null)
+    {
+        <dt class="col-sm-3">Coordenadas</dt>
+        <dd class="col-sm-9">@Model.Latitud, @Model.Longitud</dd>
+    }
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model.IdInmueble" class="btn btn-warning">Editar</a>
+<a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
