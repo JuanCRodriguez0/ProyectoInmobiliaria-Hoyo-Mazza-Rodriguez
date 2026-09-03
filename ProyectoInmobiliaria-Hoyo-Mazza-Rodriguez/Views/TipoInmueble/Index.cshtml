@@ -1,0 +1,33 @@
+@model IEnumerable<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.TipoInmueble>
+
+@{
+    ViewData["Title"] = "Tipos de Inmueble";
+}
+
+<h1>Tipos de Inmueble</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nuevo Tipo de Inmueble</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Descripción</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model)
+{
+        <tr>
+            <td>@item.Descripcion</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.IdTipoInmueble" class="btn btn-sm btn-warning">Editar</a>
+                <a asp-action="Details" asp-route-id="@item.IdTipoInmueble" class="btn btn-sm btn-info">Detalles</a>
+                <a asp-action="Delete" asp-route-id="@item.IdTipoInmueble" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

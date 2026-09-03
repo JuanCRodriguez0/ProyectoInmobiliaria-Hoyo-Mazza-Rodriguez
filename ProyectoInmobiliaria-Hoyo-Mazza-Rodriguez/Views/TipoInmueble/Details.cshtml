@@ -1,0 +1,15 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.TipoInmueble
+
+@{
+    ViewData["Title"] = "Detalles del Tipo de Inmueble";
+}
+
+<h1>Detalles</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Descripción</dt>
+    <dd class="col-sm-9">@Model.Descripcion</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model.IdTipoInmueble" class="btn btn-warning">Editar</a>
+<a asp-action="Index" class="btn btn-secondary">Volver</a>

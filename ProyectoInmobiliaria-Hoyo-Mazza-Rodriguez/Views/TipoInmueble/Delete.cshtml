@@ -1,0 +1,18 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.TipoInmueble
+
+@{
+    ViewData["Title"] = "Eliminar Tipo de Inmueble";
+}
+
+<h1>¿Eliminar este tipo de inmueble?</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Descripción</dt>
+    <dd class="col-sm-9">@Model.Descripcion</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="IdTipoInmueble" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
