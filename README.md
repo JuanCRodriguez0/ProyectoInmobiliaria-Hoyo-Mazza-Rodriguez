@@ -47,4 +47,4 @@
 
 3. **Verificar Tablas:**
    * Hacer clic derecho sobre la base de datos `inmobiliaria_db` en DBeaver y seleccionar **Refresh** (`F5`).
-   * Desplegar la sección **Tables** para confirmar la presencia de `propietarios` e `inquilinos`.
+   * Desplegar la sección **Tables** para confirmar la presencia de `propietarios`, `inquilinos`, `tipos_inmueble`, `inmuebles`, `inmueble_imagenes` y `reservas`.

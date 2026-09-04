@@ -10,8 +10,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         {
             connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
-
-        // Trae todos los activos, con el nombre del propietario y la descripción del tipo (para el listado)
         public List<Inmueble> ObtenerTodos()
         {
             var inmuebles = new List<Inmueble>();
@@ -76,7 +74,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return inmueble;
         }
 
-        // Lista de inmuebles de un propietario específico (para el informe pedido en el enunciado)
         public List<Inmueble> ObtenerPorPropietario(int idPropietario)
         {
             var inmuebles = new List<Inmueble>();
@@ -186,7 +183,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return res;
         }
 
-        // Baja lógica (ABM) — distinta de la suspensión de oferta
         public int Baja(int id)
         {
             int res = -1;
@@ -205,7 +201,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return res;
         }
 
-        // Suspender/reactivar oferta (regla de negocio, NO es la baja del ABM)
         public int CambiarDisponibilidad(int id, bool disponible)
         {
             int res = -1;
@@ -225,7 +220,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return res;
         }
 
-        // Búsqueda de inmuebles NO ocupados entre dos fechas (para el alta de reserva y el informe pedido)
         public List<Inmueble> ObtenerDisponiblesEntreFechas(DateTime desde, DateTime hasta)
         {
             var inmuebles = new List<Inmueble>();
@@ -243,7 +237,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                             WHERE i.estado = 1 AND i.disponible = 1
                               AND i.idInmueble NOT IN (
                                   SELECT r.idInmueble FROM reservas r
-                                  WHERE r.fechaDesde <= @hasta AND r.fechaHasta >= @desde
+                                  WHERE r.estado = 1 AND r.fechaDesde <= @hasta AND r.fechaHasta >= @desde
                               )";
 
                 using (var command = new MySqlCommand(sql, connection))

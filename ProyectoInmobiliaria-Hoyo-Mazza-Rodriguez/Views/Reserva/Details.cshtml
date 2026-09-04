@@ -1,0 +1,34 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva
+
+@{
+    ViewData["Title"] = "Detalle de la Reserva";
+    var dias = (Model.FechaHasta - Model.FechaDesde).Days;
+}
+
+<h1>Detalle de la Reserva</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Inquilino</dt>
+    <dd class="col-sm-9">@Model.NombreInquilino</dd>
+
+    <dt class="col-sm-3">Inmueble</dt>
+    <dd class="col-sm-9">@Model.DireccionInmueble</dd>
+
+    <dt class="col-sm-3">Fecha desde</dt>
+    <dd class="col-sm-9">@Model.FechaDesde.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Fecha hasta</dt>
+    <dd class="col-sm-9">@Model.FechaHasta.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Días</dt>
+    <dd class="col-sm-9">@dias</dd>
+
+    <dt class="col-sm-3">Monto por día</dt>
+    <dd class="col-sm-9">@Model.MontoPorDia.ToString("C")</dd>
+
+    <dt class="col-sm-3">Monto total</dt>
+    <dd class="col-sm-9">@((Model.MontoPorDia * dias).ToString("C"))</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model.IdReserva" class="btn btn-warning">Editar</a>
+<a asp-action="Index" class="btn btn-secondary">Volver al listado</a>

@@ -1,0 +1,46 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva>
+
+@{
+    ViewData["Title"] = "Reservas";
+}
+
+<h1>Reservas</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nueva Reserva</a>
+</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Inquilino</th>
+            <th>Inmueble</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Monto/día</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.NombreInquilino</td>
+                <td>@item.DireccionInmueble</td>
+                <td>@item.FechaDesde.ToString("dd/MM/yyyy")</td>
+                <td>@item.FechaHasta.ToString("dd/MM/yyyy")</td>
+                <td>@item.MontoPorDia.ToString("C")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.IdReserva" class="btn btn-sm btn-info">Detalles</a>
+                    <a asp-action="Edit" asp-route-id="@item.IdReserva" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.IdReserva" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

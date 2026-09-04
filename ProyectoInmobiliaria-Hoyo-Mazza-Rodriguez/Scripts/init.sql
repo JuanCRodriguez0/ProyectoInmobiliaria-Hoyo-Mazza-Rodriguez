@@ -84,6 +84,7 @@ CREATE TABLE reservas (
     montoPorDia     DECIMAL(12,2) NOT NULL,
     fechaDesde      DATE NOT NULL,
     fechaHasta      DATE NOT NULL,
+    estado          BOOLEAN NOT NULL DEFAULT 1,
     CONSTRAINT fk_reservas_inquilino FOREIGN KEY (idInquilino) REFERENCES inquilinos (idInquilino),
     CONSTRAINT fk_reservas_inmueble FOREIGN KEY (idInmueble) REFERENCES inmuebles (idInmueble)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

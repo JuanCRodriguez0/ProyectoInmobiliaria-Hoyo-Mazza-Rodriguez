@@ -1,0 +1,75 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Nueva Reserva";
+    var inmuebles = (List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>)ViewBag.InmueblesConPrecio;
+}
+
+<h1>Nueva Reserva</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="IdInquilino"></label>
+        <select asp-for="IdInquilino" class="form-control" asp-items="@((List<SelectListItem>)ViewBag.Inquilinos)">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="IdInquilino" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IdInmueble"></label>
+        <select asp-for="IdInmueble" id="IdInmueble" class="form-control">
+            <option value="">-- Seleccione --</option>
+            @foreach (var inmueble in inmuebles)
+            {
+                <option value="@inmueble.IdInmueble"
+                        data-precio="@inmueble.PrecioPorDia.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                    @inmueble.Direccion (@inmueble.DescripcionTipo) - @inmueble.PrecioPorDia.ToString("C")/día
+                </option>
+            }
+        </select>
+        <span asp-validation-for="IdInmueble" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Monto por día</label>
+        <input type="text" id="montoPorDiaDisplay" class="form-control" readonly
+               placeholder="Se completa al elegir el inmueble" />
+        <small class="form-text text-muted">
+            Se toma automáticamente del precio actual del inmueble. Si querés cambiarlo, hacelo luego
+            desde "Editar" en el listado de reservas.
+        </small>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaDesde"></label>
+        <input asp-for="FechaDesde" class="form-control" />
+        <span asp-validation-for="FechaDesde" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaHasta"></label>
+        <input asp-for="FechaHasta" class="form-control" />
+        <span asp-validation-for="FechaHasta" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('IdInmueble').addEventListener('change', function () {
+            var opcionSeleccionada = this.options[this.selectedIndex];
+            var precio = opcionSeleccionada.getAttribute('data-precio');
+            var campoMonto = document.getElementById('montoPorDiaDisplay');
+            campoMonto.value = precio
+                ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(precio)
+                : '';
+        });
+    </script>
+}
