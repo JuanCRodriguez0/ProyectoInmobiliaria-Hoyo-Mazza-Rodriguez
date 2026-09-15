@@ -39,7 +39,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         // POST: Inquilinos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Inquilinos inquilino)
+        public IActionResult Create(Inquilino inquilino)
         {
             if (ModelState.IsValid)
             {
@@ -63,7 +63,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         // POST: Inquilinos/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Inquilinos inquilino)
+        public IActionResult Edit(int id, Inquilino inquilino)
         {
             if (id != inquilino.IdInquilino)
             {

@@ -6,6 +6,15 @@
 
 <h1>Inmuebles</h1>
 
+<div class="btn-group mb-3" role="group">
+    <a asp-action="Index"
+       class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == null ? "active" : "")">Todos</a>
+    <a asp-action="Index" asp-route-disponible="true"
+       class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == true ? "active" : "")">Disponibles</a>
+    <a asp-action="Index" asp-route-disponible="false"
+       class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == false ? "active" : "")">Suspendidos</a>
+</div>
+
 <p>
     <a asp-action="Create" class="btn btn-primary">Nuevo Inmueble</a>
 </p>
@@ -18,6 +27,7 @@
 <table class="table">
     <thead>
         <tr>
+            <th>Portada</th>
             <th>Dirección</th>
             <th>Tipo</th>
             <th>Propietario</th>
@@ -31,6 +41,16 @@
         @foreach (var item in Model)
         {
             <tr>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.Portada))
+                    {
+                        <img src="@item.Portada" alt="" style="width:60px;height:45px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <span class="text-muted">Sin imagen</span>
+                    }
+                </td>
                 <td>@item.Direccion</td>
                 <td>@item.DescripcionTipo</td>
                 <td>@item.NombrePropietario</td>

@@ -104,6 +104,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
         public int Alta(Reserva reserva)
         {
+            if (reserva.FechaHasta <= reserva.FechaDesde)
+                throw new InvalidOperationException("La fecha hasta debe ser posterior a la fecha desde.");
+
+            if (ExisteSolapamiento(reserva.IdInmueble, reserva.FechaDesde, reserva.FechaHasta))
+                throw new InvalidOperationException("El inmueble ya se encuentra reservado en esas fechas.");
+
             int res = -1;
 
             using (var connection = new MySqlConnection(connectionString))
@@ -131,6 +137,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
         public int Modificacion(Reserva reserva)
         {
+            if (reserva.FechaHasta <= reserva.FechaDesde)
+                throw new InvalidOperationException("La fecha hasta debe ser posterior a la fecha desde.");
+
+            if (ExisteSolapamiento(reserva.IdInmueble, reserva.FechaDesde, reserva.FechaHasta, reserva.IdReserva))
+                throw new InvalidOperationException("El inmueble ya se encuentra reservado en esas fechas.");
+
             int res = -1;
 
             using (var connection = new MySqlConnection(connectionString))

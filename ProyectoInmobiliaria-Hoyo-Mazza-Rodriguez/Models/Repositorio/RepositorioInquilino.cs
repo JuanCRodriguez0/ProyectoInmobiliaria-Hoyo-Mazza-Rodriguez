@@ -13,9 +13,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         }
 
         // 1. OBTENER TODOS LOS INQUILINOS
-        public List<Inquilinos> ObtenerTodos()
+        public List<Inquilino> ObtenerTodos()
         {
-            var inquilinos = new List<Inquilinos>();
+            var inquilinos = new List<Inquilino>();
 
             using (var connection = new MySqlConnection(connectionString))
             {
@@ -29,7 +29,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     {
                         while (reader.Read())
                         {
-                            inquilinos.Add(new Inquilinos
+                            inquilinos.Add(new Inquilino
                             {
                                 IdInquilino = reader.GetInt32("IdInquilino"),
                                 Dni = reader.GetString("Dni"),
@@ -49,9 +49,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         }
 
         // 2. OBTENER UN INQUILINO POR ID
-        public Inquilinos? ObtenerPorId(int id)
+        public Inquilino? ObtenerPorId(int id)
         {
-            Inquilinos? inquilino = null;
+            Inquilino? inquilino = null;
 
             using (var connection = new MySqlConnection(connectionString))
             {
@@ -68,7 +68,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     {
                         if (reader.Read())
                         {
-                            inquilino = new Inquilinos
+                            inquilino = new Inquilino
                             {
                                 IdInquilino = reader.GetInt32("IdInquilino"),
                                 Dni = reader.GetString("Dni"),
@@ -88,7 +88,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         }
 
         // 3. GUARDAR (ALTA DE INQUILINO)
-        public int Alta(Inquilinos inquilino)
+        public int Alta(Inquilino inquilino)
         {
             int res = -1;
 
@@ -119,7 +119,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         }
 
         // 4. MODIFICACIÓN DE INQUILINO
-        public int Modificacion(Inquilinos inquilino)
+        public int Modificacion(Inquilino inquilino)
         {
             int res = -1;
 

@@ -1,4 +1,4 @@
-@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inquilinos
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inquilino
 
 @{
     ViewData["Title"] = "Eliminar";
@@ -6,7 +6,7 @@
 
 <h1>Eliminar</h1>
 
-<h3>¿Seguro que desea eliminar el propietario?</h3>
+<h3>¿Seguro que desea eliminar el inquilino?</h3>
 <div>
     <h4>Inquilino</h4>
     <hr />
@@ -49,7 +49,7 @@
         </dd>
     </dl>
     
-    <form asp-action="Delete" asp-asp-route="@Model.IdInquilino">
+    <form asp-action="Delete" asp-route="@Model.IdInquilino">
         <input type="submit" value="Delete" class="btn btn-danger"  /> |
         <a asp-action="Index" asp-controller="Propietario">Volver al listado</a>
     </form>

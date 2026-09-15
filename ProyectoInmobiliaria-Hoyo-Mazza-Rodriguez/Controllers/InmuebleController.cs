@@ -23,9 +23,10 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         }
 
         // GET: Inmueble
-        public IActionResult Index()
+        public IActionResult Index(bool? disponible)
         {
-            var lista = repositorioInmueble.ObtenerTodos();
+            var lista = repositorioInmueble.ObtenerFiltrados(disponible);
+            ViewBag.FiltroDisponible = disponible;
             return View(lista);
         }
 

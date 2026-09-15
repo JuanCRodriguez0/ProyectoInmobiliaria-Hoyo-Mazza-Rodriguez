@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 {
-    public class Inquilinos
+    public class Inquilino
     {
         [Key]
         public int IdInquilino { get; set; }

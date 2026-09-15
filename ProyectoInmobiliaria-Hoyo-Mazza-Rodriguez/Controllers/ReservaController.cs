@@ -58,13 +58,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             return View(reserva);
         }
 
-        // GET: Reserva/Create
-        public IActionResult Create()
-        {
-            CargarListas();
-            return View();
-        }
-
         // POST: Reserva/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -81,8 +74,15 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 
             if (ModelState.IsValid)
             {
-                repositorioReserva.Alta(reserva);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioReserva.Alta(reserva);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
             }
             CargarListas();
             return View(reserva);
@@ -114,8 +114,15 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 
             if (ModelState.IsValid)
             {
-                repositorioReserva.Modificacion(reserva);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioReserva.Modificacion(reserva);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
             }
             CargarListas();
             return View(reserva);

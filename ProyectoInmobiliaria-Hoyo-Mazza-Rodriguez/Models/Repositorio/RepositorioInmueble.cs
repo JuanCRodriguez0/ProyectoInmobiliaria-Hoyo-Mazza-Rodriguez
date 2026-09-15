@@ -41,6 +41,47 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return inmuebles;
         }
 
+        public List<Inmueble> ObtenerFiltrados(bool? disponible)
+        {
+            var inmuebles = new List<Inmueble>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = @"SELECT i.idInmueble, i.idPropietario, i.idTipoInmueble, i.direccion, i.cupo,
+                           i.ambientes, i.superficie, i.precioPorDia, i.latitud, i.longitud,
+                           i.disponible, i.estado, i.portada,
+                           CONCAT(p.nombre, ' ', p.apellido) AS NombrePropietario,
+                           t.descripcion AS DescripcionTipo
+                    FROM inmuebles i
+                    INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
+                    INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
+                    WHERE i.estado = 1";
+
+                if (disponible.HasValue)
+                {
+                    sql += " AND i.disponible = @disponible";
+                }
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    if (disponible.HasValue)
+                    {
+                        command.Parameters.AddWithValue("@disponible", disponible.Value);
+                    }
+
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            inmuebles.Add(LeerInmueble(reader));
+                        }
+                    }
+                }
+            }
+            return inmuebles;
+        }
+
         public Inmueble? ObtenerPorId(int id)
         {
             Inmueble? inmueble = null;
