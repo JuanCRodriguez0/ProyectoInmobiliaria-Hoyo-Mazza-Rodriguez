@@ -1,0 +1,39 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Usuario
+@{
+    ViewData["Title"] = "Mi perfil";
+}
+
+<h1>Mi perfil</h1>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
+
+<form asp-action="Perfil" method="post">
+    <input type="hidden" asp-for="IdUsuario" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group">
+        <label>Email</label>
+        <input class="form-control" value="@Model.Email" disabled />
+    </div>
+    <div class="form-group">
+        <label asp-for="Nombre"></label>
+        <input asp-for="Nombre" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Apellido"></label>
+        <input asp-for="Apellido" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Avatar">URL de avatar</label>
+        <input asp-for="Avatar" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="ClaveNueva">Nueva contraseña (dejar vacío para no cambiarla)</label>
+        <input asp-for="ClaveNueva" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Guardar</button>
+</form>

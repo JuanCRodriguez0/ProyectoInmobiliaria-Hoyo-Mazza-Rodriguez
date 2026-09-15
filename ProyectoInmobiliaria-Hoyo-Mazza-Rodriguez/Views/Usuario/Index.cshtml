@@ -1,0 +1,32 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Usuario>
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<h1>Usuarios</h1>
+<p><a asp-action="Create" class="btn btn-primary">Nuevo Usuario</a></p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>@u.Nombre @u.Apellido</td>
+                <td>@u.Rol</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@u.IdUsuario" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@u.IdUsuario" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

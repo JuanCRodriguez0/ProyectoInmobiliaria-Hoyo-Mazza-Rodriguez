@@ -1,0 +1,13 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Usuario
+@{
+    ViewData["Title"] = "Eliminar Usuario";
+}
+
+<h1>Eliminar Usuario</h1>
+<p>¿Confirmás eliminar a <strong>@Model.Nombre @Model.Apellido</strong> (@Model.Email)?</p>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="IdUsuario" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

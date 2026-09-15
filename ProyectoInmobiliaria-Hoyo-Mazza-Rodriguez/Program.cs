@@ -1,28 +1,56 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Data;
+using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Helpers;
+using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 Conexion.Configurar(builder.Configuration);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    var politica = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+    options.Filters.Add(new AuthorizeFilter(politica));
+});
 
-
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+var repositorioUsuario = new RepositorioUsuario(app.Configuration);
+if (repositorioUsuario.ObtenerTodos().Count == 0)
+{
+    repositorioUsuario.Alta(new Usuario
+    {
+        Email = "admin@inmobiliaria.com",
+        Clave = PasswordHelper.HashClave("Admin123!"),
+        Nombre = "Admin",
+        Apellido = "Sistema",
+        Rol = "Administrador"
+    });
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
 
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -31,6 +59,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

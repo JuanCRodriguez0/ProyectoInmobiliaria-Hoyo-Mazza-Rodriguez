@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
 namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
@@ -79,6 +80,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         }
 
         // GET: TipoInmueble/Delete/5
+        [Authorize(Roles = "Administrador")]
         public IActionResult Delete(int id)
         {
             var tipo = repositorioTipoInmueble.ObtenerPorId(id);
@@ -94,6 +96,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         // POST: TipoInmueble/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador")]
         public IActionResult DeleteConfirmed(int id)
         {
             if (repositorioTipoInmueble.TieneInmuebles(id))
