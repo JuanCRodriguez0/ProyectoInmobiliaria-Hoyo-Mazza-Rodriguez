@@ -35,11 +35,18 @@
                 <td>@item.NombreInquilino</td>
                 <td>@item.DireccionInmueble</td>
                 <td>@item.FechaDesde.ToString("dd/MM/yyyy")</td>
-                <td>@item.FechaHasta.ToString("dd/MM/yyyy")</td>
+                <td>
+                    @item.FechaHasta.ToString("dd/MM/yyyy")
+                    @if (item.IdReservaOrigen.HasValue)
+                    {
+                        <span class="badge bg-secondary" title="Renovación de la reserva #@item.IdReservaOrigen">Renovación</span>
+                    }
+                </td>
                 <td>@item.MontoPorDia.ToString("C")</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.IdReserva" class="btn btn-sm btn-info">Detalles</a>
                     <a asp-action="Edit" asp-route-id="@item.IdReserva" class="btn btn-sm btn-warning">Editar</a>
+                    <a asp-action="Renovar" asp-route-id="@item.IdReserva" class="btn btn-sm btn-outline-primary">Renovar</a>
                     <a asp-action="Delete" asp-route-id="@item.IdReserva" class="btn btn-sm btn-danger">Eliminar</a>
                     <a asp-controller="Pago" asp-action="Index" asp-route-idReserva="@item.IdReserva" class="btn btn-sm btn-success">Pagos</a>
                 </td>

@@ -1,0 +1,52 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
+@{
+    ViewData["Title"] = "Inmuebles sin reservas recientes";
+    int dias = ViewBag.Dias;
+}
+
+<h1>Inmuebles sin reservas recientes</h1>
+
+<div class="btn-group mb-3" role="group">
+    <a asp-action="SinReservas" asp-route-dias="30" class="btn btn-outline-secondary @(dias == 30 ? "active" : "")">30 días</a>
+    <a asp-action="SinReservas" asp-route-dias="60" class="btn btn-outline-secondary @(dias == 60 ? "active" : "")">60 días</a>
+    <a asp-action="SinReservas" asp-route-dias="90" class="btn btn-outline-secondary @(dias == 90 ? "active" : "")">90 días</a>
+</div>
+
+<form method="get" class="row g-2 mb-4 align-items-end">
+    <div class="col-auto">
+        <label class="form-label">Otro plazo (días)</label>
+        <input type="number" name="dias" value="@dias" min="1" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">Todos los inmuebles activos tuvieron reservas en los últimos @dias días.</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Dirección</th>
+                <th>Tipo</th>
+                <th>Propietario</th>
+                <th>Precio/día</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><a asp-controller="Inmueble" asp-action="Details" asp-route-id="@item.IdInmueble">@item.Direccion</a></td>
+                    <td>@item.DescripcionTipo</td>
+                    <td>@item.NombrePropietario</td>
+                    <td>@item.PrecioPorDia.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,74 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva
+
+@{
+    ViewData["Title"] = "Terminar reserva";
+    DateTime fechaEfectiva = (DateTime)ViewBag.FechaEfectiva;
+    decimal multa = (decimal)ViewBag.MultaCalculada;
+}
+
+<h1>Terminar reserva anticipadamente</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<dl class="row">
+    <dt class="col-sm-3">Inquilino</dt>
+    <dd class="col-sm-9">@Model.NombreInquilino</dd>
+
+    <dt class="col-sm-3">Inmueble</dt>
+    <dd class="col-sm-9">@Model.DireccionInmueble</dd>
+
+    <dt class="col-sm-3">Fecha desde</dt>
+    <dd class="col-sm-9">@Model.FechaDesde.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Fecha hasta original</dt>
+    <dd class="col-sm-9">@Model.FechaHastaOriginal.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Monto por día</dt>
+    <dd class="col-sm-9">@Model.MontoPorDia.ToString("C")</dd>
+</dl>
+
+<hr />
+
+@* Recalcular la multa cambia la fecha: se resuelve con un GET simple, en
+   el mismo estilo "todo se calcula en el servidor" del resto del proyecto. *@
+<form asp-action="Terminar" asp-route-id="@Model.IdReserva" method="get" class="row g-3 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label">Fecha de terminación efectiva</label>
+        <input type="date" name="fechaEfectiva" class="form-control"
+               value="@fechaEfectiva.ToString("yyyy-MM-dd")"
+               min="@Model.FechaDesde.ToString("yyyy-MM-dd")"
+               max="@Model.FechaHastaOriginal.AddDays(-1).ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Recalcular multa</button>
+    </div>
+</form>
+
+<div class="alert alert-warning">
+    <h4 class="alert-heading">Multa calculada: @multa.ToString("C")</h4>
+    <p class="mb-0">
+        Sobre @((Model.FechaHastaOriginal.Date - fechaEfectiva.Date).Days) día(s) restantes
+        del contrato original, a @Model.MontoPorDia.ToString("C")/día.
+    </p>
+</div>
+
+<div class="alert alert-secondary">
+    Este importe se cargará automáticamente como un pago de la reserva.
+    <strong>No se realizan devoluciones de dinero en ningún caso.</strong>
+    Si no confirma el pago ahora, la reserva no se puede finalizar.
+</div>
+
+<form asp-action="Terminar" asp-route-id="@Model.IdReserva" method="post">
+    <input type="hidden" asp-for="IdReserva" />
+    <input type="hidden" name="fechaEfectiva" value="@fechaEfectiva.ToString("yyyy-MM-dd")" />
+
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="confirmaPago" value="true" id="confirmaPago" />
+        <label class="form-check-label" for="confirmaPago">
+            Confirmo que el inquilino paga la multa de @multa.ToString("C") en este momento.
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-danger">Registrar pago y finalizar reserva</button>
+    <a asp-action="Details" asp-route-id="@Model.IdReserva" class="btn btn-secondary">Cancelar</a>
+</form>

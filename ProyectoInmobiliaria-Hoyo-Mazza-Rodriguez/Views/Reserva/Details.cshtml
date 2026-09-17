@@ -3,9 +3,27 @@
 @{
     ViewData["Title"] = "Detalle de la Reserva";
     var dias = (Model.FechaHasta - Model.FechaDesde).Days;
+    var esAdmin = (bool)ViewBag.EsAdministrador;
 }
 
 <h1>Detalle de la Reserva</h1>
+
+@if (Model.Terminada)
+{
+    <div class="alert alert-warning">
+        Esta reserva fue <strong>terminada anticipadamente</strong>
+        el @Model.FechaTerminacionEfectiva?.ToString("dd/MM/yyyy").
+        Multa aplicada: <strong>@Model.Multa?.ToString("C")</strong>.
+    </div>
+}
+
+@if (Model.IdReservaOrigen.HasValue)
+{
+    <div class="alert alert-secondary">
+        Esta reserva es una <strong>renovación</strong> de la
+        <a asp-action="Details" asp-route-id="@Model.IdReservaOrigen">reserva #@Model.IdReservaOrigen</a>.
+    </div>
+}
 
 <dl class="row">
     <dt class="col-sm-3">Inquilino</dt>
@@ -18,7 +36,13 @@
     <dd class="col-sm-9">@Model.FechaDesde.ToString("dd/MM/yyyy")</dd>
 
     <dt class="col-sm-3">Fecha hasta</dt>
-    <dd class="col-sm-9">@Model.FechaHasta.ToString("dd/MM/yyyy")</dd>
+    <dd class="col-sm-9">
+        @Model.FechaHasta.ToString("dd/MM/yyyy")
+        @if (Model.Terminada)
+        {
+            <span class="text-muted">(original: @Model.FechaHastaOriginal.ToString("dd/MM/yyyy"))</span>
+        }
+    </dd>
 
     <dt class="col-sm-3">Días</dt>
     <dd class="col-sm-9">@dias</dd>
@@ -30,6 +54,29 @@
     <dd class="col-sm-9">@((Model.MontoPorDia * dias).ToString("C"))</dd>
 </dl>
 
+@* Auditoría: visible solo para administradores, solo en esta vista de detalle. *@
+@if (esAdmin)
+{
+    <dl class="row text-muted" style="font-size:.85rem;">
+        <dt class="col-sm-3">Creada por</dt>
+        <dd class="col-sm-9">@(Model.NombreUsuarioCreador ?? "—")</dd>
+
+        @if (Model.Terminada)
+        {
+            <dt class="col-sm-3">Terminada por</dt>
+            <dd class="col-sm-9">@(Model.NombreUsuarioTerminador ?? "—")</dd>
+        }
+    </dl>
+}
+
 <a asp-action="Edit" asp-route-id="@Model.IdReserva" class="btn btn-warning">Editar</a>
-<a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
 <a asp-controller="Pago" asp-action="Index" asp-route-idReserva="@Model.IdReserva" class="btn btn-success">Ver pagos</a>
+
+@if (!Model.Terminada)
+{
+    <a asp-action="Terminar" asp-route-id="@Model.IdReserva" class="btn btn-outline-danger">Terminar anticipadamente</a>
+}
+
+<a asp-action="Renovar" asp-route-id="@Model.IdReserva" class="btn btn-outline-primary">Renovar / extender</a>
+
+<a asp-action="Index" class="btn btn-secondary">Volver al listado</a>

@@ -25,18 +25,29 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             LEFT  JOIN usuarios   uc ON p.idUsuarioCreador  = uc.idUsuario
             LEFT  JOIN usuarios   ua ON p.idUsuarioAnulador = ua.idUsuario";
 
-
-        public List<Pago> ObtenerPorReserva(int idReserva, int pagina = 1, int tamPagina = 10)
+        /// <summary>
+        /// Pagos de una reserva, con paginado resuelto en el servidor.
+        /// Los anulados se siguen mostrando (baja lógica).
+        /// </summary>
+        public List<Pago> ObtenerPorReserva(int idReserva, int pagina = 1, int tamPagina = 10, string? q = null)
         {
             var pagos = new List<Pago>();
 
             if (pagina < 1) pagina = 1;
             if (tamPagina < 1) tamPagina = 10;
 
+            bool hayBusqueda = !string.IsNullOrWhiteSpace(q);
+
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = SELECT_BASE + @"
-                    WHERE p.idReserva = @idReserva
+                var sql = SELECT_BASE + " WHERE p.idReserva = @idReserva";
+
+                if (hayBusqueda)
+                {
+                    sql += " AND p.concepto LIKE @q";
+                }
+
+                sql += @"
                     ORDER BY p.fechaPago DESC, p.idPago DESC
                     LIMIT @tamPagina OFFSET @offset";
 
@@ -45,6 +56,11 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     command.Parameters.AddWithValue("@idReserva", idReserva);
                     command.Parameters.AddWithValue("@tamPagina", tamPagina);
                     command.Parameters.AddWithValue("@offset", (pagina - 1) * tamPagina);
+
+                    if (hayBusqueda)
+                    {
+                        command.Parameters.AddWithValue("@q", $"%{q!.Trim()}%");
+                    }
 
                     connection.Open();
                     using (var reader = command.ExecuteReader())
@@ -59,18 +75,30 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return pagos;
         }
 
-
-        public int ContarPorReserva(int idReserva)
+        /// <summary>Cantidad total de pagos de una reserva (para armar el paginador).</summary>
+        public int ContarPorReserva(int idReserva, string? q = null)
         {
             int total = 0;
+            bool hayBusqueda = !string.IsNullOrWhiteSpace(q);
 
             using (var connection = new MySqlConnection(connectionString))
             {
                 var sql = "SELECT COUNT(*) FROM pagos WHERE idReserva = @idReserva";
 
+                if (hayBusqueda)
+                {
+                    sql += " AND concepto LIKE @q";
+                }
+
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@idReserva", idReserva);
+
+                    if (hayBusqueda)
+                    {
+                        command.Parameters.AddWithValue("@q", $"%{q!.Trim()}%");
+                    }
+
                     connection.Open();
                     total = Convert.ToInt32(command.ExecuteScalar());
                 }
@@ -103,7 +131,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return pago;
         }
 
-
+        /// <summary>Suma de los importes NO anulados de una reserva.</summary>
         public decimal TotalPagadoPorReserva(int idReserva)
         {
             decimal total = 0;
@@ -150,17 +178,17 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return res;
         }
 
-
+        /// <summary>
+        /// Al editar un pago SOLO se puede modificar el concepto.
+        /// El importe y la fecha quedan fijos a propósito.
+        /// </summary>
         public int ModificarConcepto(int idPago, string concepto)
         {
             int res = -1;
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"UPDATE pagos 
-                    SET concepto = @concepto 
-                    WHERE idPago = @id 
-                      AND anulado = 0";
+                var sql = @"UPDATE pagos SET concepto = @concepto WHERE idPago = @id";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -171,11 +199,13 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     res = command.ExecuteNonQuery();
                 }
             }
-
             return res;
         }
 
-
+        /// <summary>
+        /// Baja lógica: el pago se sigue mostrando pero marcado como anulado.
+        /// Se registra qué usuario lo anuló.
+        /// </summary>
         public int Anular(int idPago, int idUsuarioAnulador)
         {
             int res = -1;

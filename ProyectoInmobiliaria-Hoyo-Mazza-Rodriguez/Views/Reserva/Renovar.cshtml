@@ -1,0 +1,58 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva
+@{
+    ViewData["Title"] = "Renovar Reserva";
+    var origen = (ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva)ViewBag.ReservaOrigen;
+}
+
+<h1>Renovar / extender reserva</h1>
+
+<div class="alert alert-info">
+    Estás generando una <strong>nueva reserva</strong> a partir de la reserva
+    <strong>#@origen.IdReserva</strong>
+    (@origen.FechaDesde.ToString("dd/MM/yyyy") al @origen.FechaHasta.ToString("dd/MM/yyyy")).
+    La reserva original <strong>no se modifica</strong>: queda tal cual estaba, y esta se
+    guarda como un alquiler nuevo para el mismo inquilino e inmueble.
+</div>
+
+<form asp-action="Renovar" asp-route-id="@origen.IdReserva" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="IdInquilino" />
+    <input type="hidden" asp-for="IdInmueble" />
+    <input type="hidden" asp-for="IdReservaOrigen" />
+
+    <div class="form-group">
+        <label>Inquilino</label>
+        <input type="text" class="form-control" value="@origen.NombreInquilino" readonly />
+    </div>
+
+    <div class="form-group">
+        <label>Inmueble</label>
+        <input type="text" class="form-control" value="@origen.DireccionInmueble" readonly />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="MontoPorDia"></label>
+        <input asp-for="MontoPorDia" class="form-control" />
+        <span asp-validation-for="MontoPorDia" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaDesde"></label>
+        <input asp-for="FechaDesde" class="form-control" />
+        <span asp-validation-for="FechaDesde" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaHasta"></label>
+        <input asp-for="FechaHasta" class="form-control" />
+        <span asp-validation-for="FechaHasta" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Confirmar renovación</button>
+    <a asp-action="Details" asp-route-id="@origen.IdReserva" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Informes";
+}
+
+<h1>Informes</h1>
+
+<div class="list-group">
+    <a asp-controller="Inmueble" asp-action="Index" class="list-group-item list-group-item-action">
+        <strong>Inmuebles y su dueño</strong>
+        <div class="text-muted">Listado completo, filtrable por disponibilidad.</div>
+    </a>
+
+    <a asp-action="PorPropietario" class="list-group-item list-group-item-action">
+        <strong>Inmuebles de un propietario</strong>
+        <div class="text-muted">Elegí un propietario y mirá todos sus inmuebles.</div>
+    </a>
+
+    <a asp-action="MasReservados" class="list-group-item list-group-item-action">
+        <strong>Inmuebles más reservados</strong>
+        <div class="text-muted">Ranking según reservas de los últimos 365 días (configurable).</div>
+    </a>
+
+    <a asp-action="SinReservas" class="list-group-item list-group-item-action">
+        <strong>Inmuebles sin reservas recientes</strong>
+        <div class="text-muted">Inmuebles sin ninguna reserva en los últimos X días.</div>
+    </a>
+
+    <a asp-action="ReservasVigentes" class="list-group-item list-group-item-action">
+        <strong>Reservas vigentes</strong>
+        <div class="text-muted">Reservas cuyo período incluye la fecha de hoy.</div>
+    </a>
+
+    <a asp-action="ReservasPorTerminar" class="list-group-item list-group-item-action">
+        <strong>Reservas que terminan pronto</strong>
+        <div class="text-muted">Reservas activas cuyo fin cae dentro de los próximos X días.</div>
+    </a>
+
+    <a asp-action="Disponibilidad" class="list-group-item list-group-item-action">
+        <strong>Disponibilidad entre fechas</strong>
+        <div class="text-muted">Dado un rango de fechas, qué inmuebles quedan libres.</div>
+    </a>
+</div>

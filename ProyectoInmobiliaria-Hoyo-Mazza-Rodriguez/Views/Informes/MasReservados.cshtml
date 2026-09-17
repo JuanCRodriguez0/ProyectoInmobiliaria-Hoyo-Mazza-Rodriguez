@@ -1,0 +1,53 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.InformeInmuebleReservas>
+@{
+    ViewData["Title"] = "Inmuebles más reservados";
+    int dias = ViewBag.Dias;
+    int top = ViewBag.Top;
+}
+
+<h1>Inmuebles más reservados</h1>
+
+<form method="get" class="row g-2 mb-4 align-items-end">
+    <div class="col-auto">
+        <label class="form-label">Período (días)</label>
+        <input type="number" name="dias" value="@dias" min="1" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Cantidad a mostrar</label>
+        <input type="number" name="top" value="@top" min="1" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Actualizar</button>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No hay reservas registradas en ese período.</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Inmueble</th>
+                <th>Propietario</th>
+                <th>Reservas en el período</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ int puesto = 1; }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@puesto</td>
+                    <td><a asp-controller="Inmueble" asp-action="Details" asp-route-id="@item.Inmueble.IdInmueble">@item.Inmueble.Direccion</a></td>
+                    <td>@item.Inmueble.NombrePropietario</td>
+                    <td>@item.CantidadReservas</td>
+                </tr>
+                puesto++;
+            }
+        </tbody>
+    </table>
+}

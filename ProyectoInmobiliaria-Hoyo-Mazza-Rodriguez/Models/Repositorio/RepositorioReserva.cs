@@ -10,20 +10,28 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         {
             connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
+
+        private const string SELECT_BASE = @"
+            SELECT r.idReserva, r.idInquilino, r.idInmueble, r.montoPorDia, r.fechaDesde, r.fechaHasta,
+                   r.fechaHastaOriginal, r.fechaTerminacionEfectiva, r.multa, r.terminada,
+                   r.idUsuarioCreador, r.idUsuarioTerminador, r.idReservaOrigen,
+                   CONCAT(q.nombre, ' ', q.apellido) AS NombreInquilino,
+                   i.direccion AS DireccionInmueble,
+                   CONCAT(uc.nombre, ' ', uc.apellido) AS NombreUsuarioCreador,
+                   CONCAT(ut.nombre, ' ', ut.apellido) AS NombreUsuarioTerminador
+            FROM reservas r
+            INNER JOIN inquilinos q ON r.idInquilino = q.idInquilino
+            INNER JOIN inmuebles i ON r.idInmueble = i.idInmueble
+            LEFT JOIN usuarios uc ON r.idUsuarioCreador = uc.idUsuario
+            LEFT JOIN usuarios ut ON r.idUsuarioTerminador = ut.idUsuario";
+
         public List<Reserva> ObtenerTodos()
         {
             var reservas = new List<Reserva>();
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"SELECT r.idReserva, r.idInquilino, r.idInmueble, r.montoPorDia, r.fechaDesde, r.fechaHasta,
-                                   CONCAT(q.nombre, ' ', q.apellido) AS NombreInquilino,
-                                   i.direccion AS DireccionInmueble
-                            FROM reservas r
-                            INNER JOIN inquilinos q ON r.idInquilino = q.idInquilino
-                            INNER JOIN inmuebles i ON r.idInmueble = i.idInmueble
-                            WHERE r.estado = 1
-                            ORDER BY r.fechaDesde DESC";
+                var sql = SELECT_BASE + " WHERE r.estado = 1 ORDER BY r.fechaDesde DESC";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -46,13 +54,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"SELECT r.idReserva, r.idInquilino, r.idInmueble, r.montoPorDia, r.fechaDesde, r.fechaHasta,
-                                   CONCAT(q.nombre, ' ', q.apellido) AS NombreInquilino,
-                                   i.direccion AS DireccionInmueble
-                            FROM reservas r
-                            INNER JOIN inquilinos q ON r.idInquilino = q.idInquilino
-                            INNER JOIN inmuebles i ON r.idInmueble = i.idInmueble
-                            WHERE r.idReserva = @id";
+                var sql = SELECT_BASE + " WHERE r.idReserva = @id";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -77,14 +79,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"SELECT r.idReserva, r.idInquilino, r.idInmueble, r.montoPorDia, r.fechaDesde, r.fechaHasta,
-                                   CONCAT(q.nombre, ' ', q.apellido) AS NombreInquilino,
-                                   i.direccion AS DireccionInmueble
-                            FROM reservas r
-                            INNER JOIN inquilinos q ON r.idInquilino = q.idInquilino
-                            INNER JOIN inmuebles i ON r.idInmueble = i.idInmueble
-                            WHERE r.idInmueble = @idInmueble AND r.estado = 1
-                            ORDER BY r.fechaDesde DESC";
+                var sql = SELECT_BASE + " WHERE r.idInmueble = @idInmueble AND r.estado = 1 ORDER BY r.fechaDesde DESC";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -101,8 +96,67 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return reservas;
         }
+        
+public List<Reserva> ObtenerVigentes()
+{
+    var reservas = new List<Reserva>();
 
-        public int Alta(Reserva reserva)
+    using (var connection = new MySqlConnection(connectionString))
+    {
+        var sql = SELECT_BASE + @"
+            WHERE r.estado = 1
+              AND r.fechaDesde <= @hoy
+              AND r.fechaHasta >= @hoy
+            ORDER BY r.fechaHasta";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@hoy", DateTime.Today);
+            connection.Open();
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    reservas.Add(LeerReserva(reader));
+                }
+            }
+        }
+    }
+    return reservas;
+}
+
+
+public List<Reserva> ObtenerQueTerminanEn(int dias)
+{
+    var reservas = new List<Reserva>();
+
+    using (var connection = new MySqlConnection(connectionString))
+    {
+        var sql = SELECT_BASE + @"
+            WHERE r.estado = 1
+              AND r.terminada = 0
+              AND r.fechaHasta BETWEEN @hoy AND @limite
+            ORDER BY r.fechaHasta";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@hoy", DateTime.Today);
+            command.Parameters.AddWithValue("@limite", DateTime.Today.AddDays(dias));
+            connection.Open();
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    reservas.Add(LeerReserva(reader));
+                }
+            }
+        }
+    }
+    return reservas;
+}
+
+        
+        public int Alta(Reserva reserva, int? idUsuarioCreador = null)
         {
             if (reserva.FechaHasta <= reserva.FechaDesde)
                 throw new InvalidOperationException("La fecha hasta debe ser posterior a la fecha desde.");
@@ -114,8 +168,13 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                var sql = @"INSERT INTO reservas (idInquilino, idInmueble, montoPorDia, fechaDesde, fechaHasta, estado)
-                            VALUES (@idInquilino, @idInmueble, @montoPorDia, @fechaDesde, @fechaHasta, @estado);
+                
+                var sql = @"INSERT INTO reservas
+                                (idInquilino, idInmueble, montoPorDia, fechaDesde, fechaHasta,
+                                 fechaHastaOriginal, idUsuarioCreador, idReservaOrigen, terminada, estado)
+                            VALUES
+                                (@idInquilino, @idInmueble, @montoPorDia, @fechaDesde, @fechaHasta,
+                                 @fechaHastaOriginal, @idUsuarioCreador, @idReservaOrigen, 0, 1);
                             SELECT LAST_INSERT_ID();";
 
                 using (var command = new MySqlCommand(sql, connection))
@@ -125,7 +184,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     command.Parameters.AddWithValue("@montoPorDia", reserva.MontoPorDia);
                     command.Parameters.AddWithValue("@fechaDesde", reserva.FechaDesde);
                     command.Parameters.AddWithValue("@fechaHasta", reserva.FechaHasta);
-                    command.Parameters.AddWithValue("@estado", true);
+                    command.Parameters.AddWithValue("@fechaHastaOriginal", reserva.FechaHasta);
+                    command.Parameters.AddWithValue("@idUsuarioCreador", (object?)idUsuarioCreador ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@idReservaOrigen", (object?)reserva.IdReservaOrigen ?? DBNull.Value);
 
                     connection.Open();
                     res = Convert.ToInt32(command.ExecuteScalar());
@@ -216,6 +277,115 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return existe;
         }
+        public decimal CalcularMulta(Reserva reserva, DateTime fechaTerminacionEfectiva)
+        {
+            var diasOriginales = (reserva.FechaHastaOriginal.Date - reserva.FechaDesde.Date).Days;
+            var diasCumplidos = (fechaTerminacionEfectiva.Date - reserva.FechaDesde.Date).Days;
+            var diasRestantes = (reserva.FechaHastaOriginal.Date - fechaTerminacionEfectiva.Date).Days;
+
+            if (diasRestantes < 0) diasRestantes = 0;
+
+            var montoRestante = diasRestantes * reserva.MontoPorDia;
+            var porcentaje = diasCumplidos < (diasOriginales / 2m) ? 0.50m : 0.25m;
+
+            return Math.Round(montoRestante * porcentaje, 2);
+        }
+
+        public decimal TerminarAnticipadamente(int idReserva, DateTime fechaTerminacionEfectiva, int idUsuarioTerminador)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var transaccion = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        Reserva reserva;
+
+                        
+                        using (var comandoSelect = new MySqlCommand(
+                            @"SELECT idReserva, idInquilino, idInmueble, montoPorDia, fechaDesde,
+                                     fechaHasta, fechaHastaOriginal, terminada
+                              FROM reservas
+                              WHERE idReserva = @id
+                              FOR UPDATE",
+                            connection, transaccion))
+                        {
+                            comandoSelect.Parameters.AddWithValue("@id", idReserva);
+
+                            using (var reader = comandoSelect.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                    throw new InvalidOperationException("La reserva no existe.");
+
+                                reserva = new Reserva
+                                {
+                                    IdReserva = reader.GetInt32("idReserva"),
+                                    IdInquilino = reader.GetInt32("idInquilino"),
+                                    IdInmueble = reader.GetInt32("idInmueble"),
+                                    MontoPorDia = reader.GetDecimal("montoPorDia"),
+                                    FechaDesde = reader.GetDateTime("fechaDesde"),
+                                    FechaHasta = reader.GetDateTime("fechaHasta"),
+                                    FechaHastaOriginal = reader.GetDateTime("fechaHastaOriginal"),
+                                    Terminada = reader.GetBoolean("terminada")
+                                };
+                            }
+                        }
+
+                        if (reserva.Terminada)
+                            throw new InvalidOperationException("La reserva ya fue terminada anteriormente.");
+
+                        if (fechaTerminacionEfectiva.Date < reserva.FechaDesde.Date)
+                            throw new InvalidOperationException("La fecha de terminación no puede ser anterior al inicio de la reserva.");
+
+                        if (fechaTerminacionEfectiva.Date >= reserva.FechaHastaOriginal.Date)
+                            throw new InvalidOperationException("Esa fecha no adelanta el fin de la reserva; no corresponde terminarla anticipadamente.");
+
+                        var multa = CalcularMulta(reserva, fechaTerminacionEfectiva);
+
+                        
+                        using (var comandoPago = new MySqlCommand(
+                            @"INSERT INTO pagos (idReserva, concepto, fechaPago, importe, anulado, idUsuarioCreador)
+                              VALUES (@idReserva, @concepto, @fechaPago, @importe, 0, @idUsuario)",
+                            connection, transaccion))
+                        {
+                            comandoPago.Parameters.AddWithValue("@idReserva", idReserva);
+                            comandoPago.Parameters.AddWithValue("@concepto", "Multa por terminación anticipada");
+                            comandoPago.Parameters.AddWithValue("@fechaPago", DateTime.Today);
+                            comandoPago.Parameters.AddWithValue("@importe", multa);
+                            comandoPago.Parameters.AddWithValue("@idUsuario", idUsuarioTerminador);
+                            comandoPago.ExecuteNonQuery();
+                        }
+
+                        
+                        using (var comandoUpdate = new MySqlCommand(
+                            @"UPDATE reservas
+                              SET terminada = 1,
+                                  fechaTerminacionEfectiva = @fechaEfectiva,
+                                  fechaHasta = @fechaEfectiva,
+                                  multa = @multa,
+                                  idUsuarioTerminador = @idUsuario
+                              WHERE idReserva = @id",
+                            connection, transaccion))
+                        {
+                            comandoUpdate.Parameters.AddWithValue("@fechaEfectiva", fechaTerminacionEfectiva.Date);
+                            comandoUpdate.Parameters.AddWithValue("@multa", multa);
+                            comandoUpdate.Parameters.AddWithValue("@idUsuario", idUsuarioTerminador);
+                            comandoUpdate.Parameters.AddWithValue("@id", idReserva);
+                            comandoUpdate.ExecuteNonQuery();
+                        }
+
+                        transaccion.Commit();
+                        return multa;
+                    }
+                    catch
+                    {
+                        transaccion.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
 
         private Reserva LeerReserva(MySqlDataReader reader)
         {
@@ -227,8 +397,24 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                 MontoPorDia = reader.GetDecimal("montoPorDia"),
                 FechaDesde = reader.GetDateTime("fechaDesde"),
                 FechaHasta = reader.GetDateTime("fechaHasta"),
+                FechaHastaOriginal = reader.GetDateTime("fechaHastaOriginal"),
+                FechaTerminacionEfectiva = reader.IsDBNull(reader.GetOrdinal("fechaTerminacionEfectiva"))
+                    ? null : reader.GetDateTime("fechaTerminacionEfectiva"),
+                Multa = reader.IsDBNull(reader.GetOrdinal("multa"))
+                    ? null : reader.GetDecimal("multa"),
+                Terminada = reader.GetBoolean("terminada"),
+                IdUsuarioCreador = reader.IsDBNull(reader.GetOrdinal("idUsuarioCreador"))
+                    ? null : reader.GetInt32("idUsuarioCreador"),
+                IdUsuarioTerminador = reader.IsDBNull(reader.GetOrdinal("idUsuarioTerminador"))
+                    ? null : reader.GetInt32("idUsuarioTerminador"),
+                IdReservaOrigen = reader.IsDBNull(reader.GetOrdinal("idReservaOrigen"))
+                    ? null : reader.GetInt32("idReservaOrigen"),
                 NombreInquilino = reader.GetString("NombreInquilino"),
-                DireccionInmueble = reader.GetString("DireccionInmueble")
+                DireccionInmueble = reader.GetString("DireccionInmueble"),
+                NombreUsuarioCreador = reader.IsDBNull(reader.GetOrdinal("NombreUsuarioCreador"))
+                    ? null : reader.GetString("NombreUsuarioCreador"),
+                NombreUsuarioTerminador = reader.IsDBNull(reader.GetOrdinal("NombreUsuarioTerminador"))
+                    ? null : reader.GetString("NombreUsuarioTerminador")
             };
         }
     }

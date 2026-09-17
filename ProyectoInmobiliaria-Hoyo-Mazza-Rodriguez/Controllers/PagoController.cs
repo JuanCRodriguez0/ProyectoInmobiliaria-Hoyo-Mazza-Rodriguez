@@ -20,7 +20,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 
         private int UsuarioActualId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        
+        // GET: Pago/Index?idReserva=5&pagina=1
         public IActionResult Index(int idReserva, int pagina = 1)
         {
             var reserva = repositorioReserva.ObtenerPorId(idReserva);
@@ -36,11 +36,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             ViewBag.TotalPagado = repositorioPago.TotalPagadoPorReserva(idReserva);
             ViewBag.Pagina = pagina;
             ViewBag.TamPagina = TAM_PAGINA;
-            ViewBag.TotalPaginas = (int)Math.Ceiling(total / (double)TAM_PAGINA);
+            ViewBag.TotalPaginas = Math.Max(1, (int)Math.Ceiling(total / (double)TAM_PAGINA));
             ViewBag.TotalRegistros = total;
-
-            
-            ViewBag.NuevoPago = new Pago { IdReserva = idReserva, FechaPago = DateTime.Today };
 
             return View(lista);
         }
@@ -53,6 +50,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 return NotFound();
             }
+
+    
+            ViewBag.EsAdministrador = User.IsInRole("Administrador");
             return View(pago);
         }
 
@@ -85,6 +85,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 ModelState.AddModelError(nameof(Pago.FechaPago), "La fecha de pago no puede ser futura.");
             }
 
+            // Estos campos no se completan desde el formulario: se descartan
+            // para que su ausencia no invalide el ModelState.
+            ModelState.Remove(nameof(Pago.Anulado));
+            ModelState.Remove(nameof(Pago.IdUsuarioCreador));
+            ModelState.Remove(nameof(Pago.IdUsuarioAnulador));
+
             if (ModelState.IsValid)
             {
                 pago.IdUsuarioCreador = UsuarioActualId;
@@ -116,7 +122,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         }
 
         // POST: Pago/Edit/5
-        
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Pago pago)
@@ -138,7 +144,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 ModelState.AddModelError(nameof(Pago.Concepto), "El concepto es obligatorio");
             }
 
-            // Se ignora cualquier cambio de importe o fecha que venga del formulario
+           
             ModelState.Remove(nameof(Pago.Importe));
             ModelState.Remove(nameof(Pago.FechaPago));
 

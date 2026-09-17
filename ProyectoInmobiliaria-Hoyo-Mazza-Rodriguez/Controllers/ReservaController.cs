@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             repositorioInquilino = new RepositorioInquilino(configuration);
             repositorioInmueble = new RepositorioInmueble(configuration);
         }
+
+        private int UsuarioActualId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         private void CargarListas()
         {
@@ -56,6 +59,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 return NotFound();
             }
+            ViewBag.EsAdministrador = User.IsInRole("Administrador");
             return View(reserva);
         }
 
@@ -84,7 +88,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 try
                 {
-                    repositorioReserva.Alta(reserva);
+                    repositorioReserva.Alta(reserva, UsuarioActualId);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (InvalidOperationException ex)
@@ -157,6 +161,139 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             repositorioReserva.Baja(id);
             return RedirectToAction(nameof(Index));
         }
+
+        
+        public IActionResult Terminar(int id, DateTime? fechaEfectiva)
+        {
+            var reserva = repositorioReserva.ObtenerPorId(id);
+            if (reserva == null)
+            {
+                return NotFound();
+            }
+
+            if (reserva.Terminada)
+            {
+                TempData["Error"] = "Esta reserva ya fue terminada anticipadamente.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var fecha = fechaEfectiva?.Date ?? DateTime.Today;
+
+          
+            if (fecha < reserva.FechaDesde.Date) fecha = reserva.FechaDesde.Date;
+            if (fecha >= reserva.FechaHastaOriginal.Date) fecha = reserva.FechaHastaOriginal.Date.AddDays(-1);
+
+            ViewBag.FechaEfectiva = fecha;
+            ViewBag.MultaCalculada = repositorioReserva.CalcularMulta(reserva, fecha);
+
+            return View(reserva);
+        }
+
+        
+        /// POST: Reserva/Terminar/5
+      
+        [HttpPost, ActionName("Terminar")]
+        [ValidateAntiForgeryToken]
+        public IActionResult TerminarConfirmado(int id, DateTime fechaEfectiva, bool confirmaPago)
+        {
+            var reserva = repositorioReserva.ObtenerPorId(id);
+            if (reserva == null)
+            {
+                return NotFound();
+            }
+
+            if (!confirmaPago)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Debe confirmar el pago de la multa para poder finalizar la reserva.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var multa = repositorioReserva.TerminarAnticipadamente(id, fechaEfectiva, UsuarioActualId);
+                    TempData["Mensaje"] = $"Reserva terminada. Se registró una multa de {multa:C}.";
+                    return RedirectToAction(nameof(Details), new { id });
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
+            }
+
+         
+            ViewBag.FechaEfectiva = fechaEfectiva.Date;
+            ViewBag.MultaCalculada = repositorioReserva.CalcularMulta(reserva, fechaEfectiva.Date);
+            return View(reserva);
+        }
+
+        // GET: Reserva/Renovar/5
+        public IActionResult Renovar(int id)
+        {
+            var original = repositorioReserva.ObtenerPorId(id);
+            if (original == null)
+            {
+                return NotFound();
+            }
+
+           
+            var inmueble = repositorioInmueble.ObtenerPorId(original.IdInmueble);
+            var nuevaFechaDesde = original.FechaHasta.Date.AddDays(1);
+
+            var propuesta = new Reserva
+            {
+                IdInquilino = original.IdInquilino,
+                IdInmueble = original.IdInmueble,
+                MontoPorDia = inmueble?.PrecioPorDia ?? original.MontoPorDia,
+                FechaDesde = nuevaFechaDesde,
+                FechaHasta = nuevaFechaDesde.AddMonths(1),
+                IdReservaOrigen = original.IdReserva
+            };
+
+            ViewBag.ReservaOrigen = original;
+            return View(propuesta);
+        }
+
+        // POST: Reserva/Renovar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Renovar(int id, Reserva reserva)
+        {
+            var original = repositorioReserva.ObtenerPorId(id);
+            if (original == null)
+            {
+                return NotFound();
+            }
+
+           
+            reserva.IdInquilino = original.IdInquilino;
+            reserva.IdInmueble = original.IdInmueble;
+            reserva.IdReservaOrigen = original.IdReserva;
+            ModelState.Remove(nameof(Reserva.IdInquilino));
+            ModelState.Remove(nameof(Reserva.IdInmueble));
+            ModelState.Remove(nameof(Reserva.IdReservaOrigen));
+
+            ValidarReserva(reserva);
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    repositorioReserva.Alta(reserva, UsuarioActualId);
+                    TempData["Mensaje"] = "Reserva renovada correctamente.";
+                    return RedirectToAction(nameof(Details), new { id = reserva.IdReserva });
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError(string.Empty, ex.Message);
+                }
+            }
+
+            ViewBag.ReservaOrigen = original;
+            return View(reserva);
+        }
+
         private void ValidarReserva(Reserva reserva)
         {
             if (reserva.FechaHasta <= reserva.FechaDesde)

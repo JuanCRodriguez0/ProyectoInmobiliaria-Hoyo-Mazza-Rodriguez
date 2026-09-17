@@ -146,6 +146,89 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return inmuebles;
         }
+       
+        public List<InformeInmuebleReservas> ObtenerMasReservados(int dias = 365, int top = 10)
+        {
+            var resultado = new List<InformeInmuebleReservas>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = @"SELECT i.idInmueble, i.idPropietario, i.idTipoInmueble, i.direccion, i.cupo,
+                           i.ambientes, i.superficie, i.precioPorDia, i.latitud, i.longitud,
+                           i.disponible, i.estado, i.portada,
+                           CONCAT(p.nombre, ' ', p.apellido) AS NombrePropietario,
+                           t.descripcion AS DescripcionTipo,
+                           COUNT(r.idReserva) AS CantidadReservas
+                    FROM inmuebles i
+                    INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
+                    INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
+                    INNER JOIN reservas r ON r.idInmueble = i.idInmueble
+                                          AND r.estado = 1
+                                          AND r.fechaDesde >= @desde
+                    WHERE i.estado = 1
+                    GROUP BY i.idInmueble
+                    ORDER BY CantidadReservas DESC
+                    LIMIT @top";
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@desde", DateTime.Today.AddDays(-dias));
+                    command.Parameters.AddWithValue("@top", top);
+
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            resultado.Add(new InformeInmuebleReservas
+                            {
+                                Inmueble = LeerInmueble(reader),
+                                CantidadReservas = reader.GetInt32("CantidadReservas")
+                            });
+                        }
+                    }
+                }
+            }
+            return resultado;
+        }
+
+
+        public List<Inmueble> ObtenerSinReservasEn(int dias)
+        {
+            var inmuebles = new List<Inmueble>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = @"SELECT i.idInmueble, i.idPropietario, i.idTipoInmueble, i.direccion, i.cupo,
+                           i.ambientes, i.superficie, i.precioPorDia, i.latitud, i.longitud,
+                           i.disponible, i.estado, i.portada,
+                           CONCAT(p.nombre, ' ', p.apellido) AS NombrePropietario,
+                           t.descripcion AS DescripcionTipo
+                    FROM inmuebles i
+                    INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
+                    INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
+                    WHERE i.estado = 1
+                      AND i.idInmueble NOT IN (
+                          SELECT r.idInmueble FROM reservas r
+                          WHERE r.estado = 1 AND r.fechaDesde >= @desde
+                      )
+                    ORDER BY i.direccion";
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@desde", DateTime.Today.AddDays(-dias));
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            inmuebles.Add(LeerInmueble(reader));
+                        }
+                    }
+                }
+            }
+            return inmuebles;
+        }
 
         public int Alta(Inmueble inmueble)
         {

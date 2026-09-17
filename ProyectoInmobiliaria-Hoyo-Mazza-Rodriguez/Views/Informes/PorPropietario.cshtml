@@ -1,0 +1,60 @@
+@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
+@using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
+@{
+    ViewData["Title"] = "Inmuebles por propietario";
+    var propietarios = (List<Propietario>)ViewBag.Propietarios;
+    int? seleccionado = ViewBag.IdPropietarioSeleccionado;
+}
+
+<h1>Inmuebles por propietario</h1>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-auto">
+        <select name="idPropietario" class="form-control" onchange="this.form.submit()">
+            <option value="">-- Seleccione un propietario --</option>
+            @foreach (var p in propietarios)
+            {
+                <option value="@p.IdPropietario" selected="@(p.IdPropietario == seleccionado)">
+                    @p.Dni - @p.Nombre @p.Apellido
+                </option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Ver</button>
+    </div>
+</form>
+
+@if (seleccionado.HasValue)
+{
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">Este propietario no tiene inmuebles cargados.</div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Dirección</th>
+                    <th>Tipo</th>
+                    <th>Cupo</th>
+                    <th>Precio/día</th>
+                    <th>Disponible</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><a asp-controller="Inmueble" asp-action="Details" asp-route-id="@item.IdInmueble">@item.Direccion</a></td>
+                        <td>@item.DescripcionTipo</td>
+                        <td>@item.Cupo</td>
+                        <td>@item.PrecioPorDia.ToString("C")</td>
+                        <td>@(item.Disponible ? "Sí" : "Suspendido")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
