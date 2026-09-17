@@ -14,10 +14,22 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         }
 
         // GET: Inquilinos
-        public IActionResult Index()
+        public IActionResult Index(int pagina = 1, string? busqueda = null)
         {
-            var lista = repositorioInquilino.ObtenerTodos();
-            return View(lista);
+            const int tamanioPagina = 10;
+            var resultado = repositorioInquilino.ObtenerPaginado(pagina, tamanioPagina, busqueda);
+            return View(resultado);
+        }
+
+        [HttpGet]
+        public IActionResult Buscar(string term)
+        {
+            if (string.IsNullOrWhiteSpace(term)) return Json(new object[0]);
+
+            var resultado = repositorioInquilino.BuscarPorTexto(term)
+                .Select(i => new { id = i.IdInquilino, text = $"{i.Dni} - {i.Nombre} {i.Apellido}" });
+
+            return Json(resultado);
         }
 
         // GET: Inquilinos/Details/5

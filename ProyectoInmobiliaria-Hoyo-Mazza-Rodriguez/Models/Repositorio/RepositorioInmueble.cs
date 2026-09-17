@@ -41,7 +41,72 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return inmuebles;
         }
 
-        public List<Inmueble> ObtenerFiltrados(bool? disponible)
+        public PaginadoResultado<Inmueble> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda, bool? disponible)
+        {
+            var resultado = new PaginadoResultado<Inmueble>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina,
+                Busqueda = busqueda
+            };
+            var inmuebles = new List<Inmueble>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var where = "WHERE i.estado = 1";
+                if (disponible.HasValue) where += " AND i.disponible = @disponible";
+                if (!string.IsNullOrWhiteSpace(busqueda))
+                    where += " AND (i.direccion LIKE @busqueda OR p.nombre LIKE @busqueda OR p.apellido LIKE @busqueda OR t.descripcion LIKE @busqueda)";
+
+                var sqlCount = $@"SELECT COUNT(*) FROM inmuebles i
+                          INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
+                          INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
+                          {where}";
+
+                var sqlDatos = $@"SELECT i.idInmueble, i.idPropietario, i.idTipoInmueble, i.direccion, i.cupo,
+                                 i.ambientes, i.superficie, i.precioPorDia, i.latitud, i.longitud,
+                                 i.disponible, i.estado, i.portada,
+                                 CONCAT(p.nombre, ' ', p.apellido) AS NombrePropietario,
+                                 t.descripcion AS DescripcionTipo
+                          FROM inmuebles i
+                          INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
+                          INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
+                          {where}
+                          ORDER BY i.idInmueble DESC
+                          LIMIT @tamanio OFFSET @offset";
+
+                connection.Open();
+
+                using (var comandoCount = new MySqlCommand(sqlCount, connection))
+                {
+                    if (disponible.HasValue) comandoCount.Parameters.AddWithValue("@disponible", disponible.Value);
+                    if (!string.IsNullOrWhiteSpace(busqueda)) comandoCount.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
+                using (var command = new MySqlCommand(sqlDatos, connection))
+                {
+                    if (disponible.HasValue) command.Parameters.AddWithValue("@disponible", disponible.Value);
+                    if (!string.IsNullOrWhiteSpace(busqueda)) command.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            inmuebles.Add(LeerInmueble(reader));
+                        }
+                    }
+                }
+            }
+
+            resultado.Items = inmuebles;
+            return resultado;
+        }
+
+        // Usado por el autocompletado de Inmueble en Reserva
+        public List<Inmueble> BuscarPorTexto(string term, int limite = 10)
         {
             var inmuebles = new List<Inmueble>();
 
@@ -55,20 +120,14 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     FROM inmuebles i
                     INNER JOIN propietarios p ON i.idPropietario = p.idPropietario
                     INNER JOIN tipos_inmueble t ON i.idTipoInmueble = t.idTipoInmueble
-                    WHERE i.estado = 1";
-
-                if (disponible.HasValue)
-                {
-                    sql += " AND i.disponible = @disponible";
-                }
+                    WHERE i.estado = 1 AND i.direccion LIKE @term
+                    ORDER BY i.direccion
+                    LIMIT @limite";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
-                    if (disponible.HasValue)
-                    {
-                        command.Parameters.AddWithValue("@disponible", disponible.Value);
-                    }
-
+                    command.Parameters.AddWithValue("@term", $"%{term}%");
+                    command.Parameters.AddWithValue("@limite", limite);
                     connection.Open();
                     using (var reader = command.ExecuteReader())
                     {
@@ -146,7 +205,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return inmuebles;
         }
-       
+
         public List<InformeInmuebleReservas> ObtenerMasReservados(int dias = 365, int top = 10)
         {
             var resultado = new List<InformeInmuebleReservas>();

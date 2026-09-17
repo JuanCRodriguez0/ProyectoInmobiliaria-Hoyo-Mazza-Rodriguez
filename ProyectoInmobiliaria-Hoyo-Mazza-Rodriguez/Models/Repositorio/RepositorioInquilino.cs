@@ -20,7 +20,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             using (var connection = new MySqlConnection(connectionString))
             {
                 var sql = @"SELECT IdInquilino, Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo 
-                            FROM inquilinos WHERE estado = 1" ;
+                            FROM inquilinos WHERE estado = 1";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -172,6 +172,107 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                 }
             }
             return res;
+        }
+
+        public PaginadoResultado<Inquilino> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda)
+        {
+            var resultado = new PaginadoResultado<Inquilino>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina,
+                Busqueda = busqueda
+            };
+            var inquilinos = new List<Inquilino>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var where = "WHERE estado = 1";
+                if (!string.IsNullOrWhiteSpace(busqueda))
+                    where += " AND (Nombre LIKE @busqueda OR Apellido LIKE @busqueda OR Dni LIKE @busqueda)";
+
+                var sqlCount = $"SELECT COUNT(*) FROM inquilinos {where}";
+                var sqlDatos = $@"SELECT IdInquilino, Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo
+                          FROM inquilinos {where}
+                          ORDER BY Apellido, Nombre
+                          LIMIT @tamanio OFFSET @offset";
+
+                connection.Open();
+
+                using (var comandoCount = new MySqlCommand(sqlCount, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) comandoCount.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
+                using (var command = new MySqlCommand(sqlDatos, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) command.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            inquilinos.Add(new Inquilino
+                            {
+                                IdInquilino = reader.GetInt32("IdInquilino"),
+                                Dni = reader.GetString("Dni"),
+                                Nombre = reader.GetString("Nombre"),
+                                Apellido = reader.GetString("Apellido"),
+                                FechaNacimiento = reader.GetDateTime("FechaNacimiento"),
+                                Telefono = reader.GetString("Telefono"),
+                                Email = reader.GetString("Email"),
+                                Garantes = reader.GetString("Garantes"),
+                                Sueldo = reader.GetDecimal("Sueldo")
+                            });
+                        }
+                    }
+                }
+            }
+
+            resultado.Items = inquilinos;
+            return resultado;
+        }
+
+        public List<Inquilino> BuscarPorTexto(string term, int limite = 10)
+        {
+            var inquilinos = new List<Inquilino>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = @"SELECT IdInquilino, Dni, Nombre, Apellido, FechaNacimiento, Telefono, Email, Garantes, Sueldo
+                    FROM inquilinos
+                    WHERE estado = 1 AND (Nombre LIKE @term OR Apellido LIKE @term OR Dni LIKE @term)
+                    ORDER BY Apellido, Nombre
+                    LIMIT @limite";
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@term", $"%{term}%");
+                    command.Parameters.AddWithValue("@limite", limite);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            inquilinos.Add(new Inquilino
+                            {
+                                IdInquilino = reader.GetInt32("IdInquilino"),
+                                Dni = reader.GetString("Dni"),
+                                Nombre = reader.GetString("Nombre"),
+                                Apellido = reader.GetString("Apellido"),
+                                FechaNacimiento = reader.GetDateTime("FechaNacimiento"),
+                                Telefono = reader.GetString("Telefono"),
+                                Email = reader.GetString("Email"),
+                                Garantes = reader.GetString("Garantes"),
+                                Sueldo = reader.GetDecimal("Sueldo")
+                            });
+                        }
+                    }
+                }
+            }
+            return inquilinos;
         }
     }
 }

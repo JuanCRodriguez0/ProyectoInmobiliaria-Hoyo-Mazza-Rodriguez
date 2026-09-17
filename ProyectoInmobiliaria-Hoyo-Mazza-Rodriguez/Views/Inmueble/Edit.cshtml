@@ -3,20 +3,22 @@
 
 @{
     ViewData["Title"] = "Editar Inmueble";
+    var galeria = (List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.InmuebleImagen>)ViewBag.Galeria;
 }
 
 <h1>Editar Inmueble</h1>
 
-<form asp-action="Edit" method="post">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="IdInmueble" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="form-group">
-        <label asp-for="IdPropietario">Propietario</label>
-        <select asp-for="IdPropietario" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Propietarios, "IdPropietario", "Nombre"))">
-            <option value="">-- Seleccione --</option>
-        </select>
+    <div class="form-group position-relative">
+        <label>Propietario</label>
+        <input type="text" id="inputPropietario" class="form-control" autocomplete="off"
+               value="@Model.NombrePropietario" placeholder="Buscar por DNI, nombre o apellido..." />
+        <input type="hidden" asp-for="IdPropietario" />
+        <div id="listaPropietario" class="list-group position-absolute w-100"
+             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
         <span asp-validation-for="IdPropietario" class="text-danger"></span>
     </div>
 
@@ -70,19 +72,50 @@
     </div>
 
     <div class="form-group">
-        <label asp-for="Portada">URL de portada</label>
-        <input asp-for="Portada" class="form-control" placeholder="https://..." />
-        <span asp-validation-for="Portada" class="text-danger"></span>
+        <label>Foto de portada</label>
+        <input type="file" name="archivoPortada" class="form-control" accept="image/*" />
         @if (!string.IsNullOrEmpty(Model.Portada))
         {
             <img src="@Model.Portada" alt="Portada actual" style="max-width:200px; margin-top:8px;" />
         }
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    <div class="form-group">
+        <label>Agregar fotos a la galería</label>
+        <input type="file" name="archivosGaleria" class="form-control" accept="image/*" multiple />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary mt-2">Cancelar</a>
 </form>
+
+@if (galeria.Any())
+{
+    <h4 class="mt-4">Galería</h4>
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var img in galeria)
+        {
+            <div class="position-relative">
+                <img src="@img.Ruta" style="width:120px;height:90px;object-fit:cover;" />
+                <form asp-action="EliminarImagen" method="post" class="position-absolute top-0 end-0">
+                    <input type="hidden" name="idImagen" value="@img.IdImagen" />
+                    <input type="hidden" name="idInmueble" value="@Model.IdInmueble" />
+                    <button type="submit" class="btn btn-sm btn-danger">×</button>
+                </form>
+            </div>
+        }
+    </div>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/buscador-servidor.js"></script>
+    <script>
+        inicializarBuscadorServidor({
+        inputId: 'inputPropietario',
+        hiddenId: 'IdPropietario',
+        listaId: 'listaPropietario',
+        url: '@Url.Action("Buscar", "Propietario")'
+        });
+    </script>
 }

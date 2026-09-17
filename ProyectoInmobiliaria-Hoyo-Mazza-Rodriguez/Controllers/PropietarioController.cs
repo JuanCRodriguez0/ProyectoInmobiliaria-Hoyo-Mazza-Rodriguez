@@ -14,10 +14,22 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         }
 
         // GET: Propietario
-        public IActionResult Index()
+        public IActionResult Index(int pagina = 1, string? busqueda = null)
         {
-            var lista = repositorioPropietario.ObtenerTodos();
-            return View(lista);
+            const int tamanioPagina = 10;
+            var resultado = repositorioPropietario.ObtenerPaginado(pagina, tamanioPagina, busqueda);
+            return View(resultado);
+        }
+
+        [HttpGet]
+        public IActionResult Buscar(string term)
+        {
+            if (string.IsNullOrWhiteSpace(term)) return Json(new object[0]);
+
+            var resultado = repositorioPropietario.BuscarPorTexto(term)
+                .Select(p => new { id = p.IdPropietario, text = $"{p.Dni} - {p.Nombre} {p.Apellido}" });
+
+            return Json(resultado);
         }
 
         // GET: Propietario/Details/5
@@ -88,7 +100,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 return NotFound();
             }
-            return View("Delete", propietario );
+            return View("Delete", propietario);
         }
 
         // POST: Propietario/Delete/5

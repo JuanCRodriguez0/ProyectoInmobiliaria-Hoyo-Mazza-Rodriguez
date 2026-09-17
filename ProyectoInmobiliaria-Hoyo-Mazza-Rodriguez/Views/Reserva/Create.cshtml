@@ -1,9 +1,7 @@
 @model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva
-@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Nueva Reserva";
-    var inmuebles = (List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>)ViewBag.InmueblesConPrecio;
 }
 
 <h1>Nueva Reserva</h1>
@@ -11,26 +9,23 @@
 <form asp-action="Create" method="post">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="form-group">
-        <label asp-for="IdInquilino"></label>
-        <select asp-for="IdInquilino" class="form-control" asp-items="@((List<SelectListItem>)ViewBag.Inquilinos)">
-            <option value="">-- Seleccione --</option>
-        </select>
+    <div class="form-group position-relative">
+        <label>Inquilino</label>
+        <input type="text" id="inputInquilino" class="form-control" autocomplete="off"
+               placeholder="Buscar por DNI, nombre o apellido..." />
+        <input type="hidden" asp-for="IdInquilino" />
+        <div id="listaInquilino" class="list-group position-absolute w-100"
+             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
         <span asp-validation-for="IdInquilino" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="IdInmueble"></label>
-        <select asp-for="IdInmueble" id="IdInmueble" class="form-control">
-            <option value="">-- Seleccione --</option>
-            @foreach (var inmueble in inmuebles)
-            {
-                <option value="@inmueble.IdInmueble"
-                        data-precio="@inmueble.PrecioPorDia.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-                    @inmueble.Direccion (@inmueble.DescripcionTipo) - @inmueble.PrecioPorDia.ToString("C")/día
-                </option>
-            }
-        </select>
+    <div class="form-group position-relative">
+        <label>Inmueble</label>
+        <input type="text" id="inputInmueble" class="form-control" autocomplete="off"
+               placeholder="Buscar por dirección..." />
+        <input type="hidden" asp-for="IdInmueble" />
+        <div id="listaInmueble" class="list-group position-absolute w-100"
+             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
         <span asp-validation-for="IdInmueble" class="text-danger"></span>
     </div>
 
@@ -62,14 +57,24 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/buscador-servidor.js"></script>
     <script>
-        document.getElementById('IdInmueble').addEventListener('change', function () {
-            var opcionSeleccionada = this.options[this.selectedIndex];
-            var precio = opcionSeleccionada.getAttribute('data-precio');
-            var campoMonto = document.getElementById('montoPorDiaDisplay');
-            campoMonto.value = precio
-                ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(precio)
-                : '';
+        inicializarBuscadorServidor({
+        inputId: 'inputInquilino',
+        hiddenId: 'IdInquilino',
+        listaId: 'listaInquilino',
+        url: '@Url.Action("Buscar", "Inquilino")'
+        });
+
+        inicializarBuscadorServidor({
+        inputId: 'inputInmueble',
+        hiddenId: 'IdInmueble',
+        listaId: 'listaInmueble',
+        url: '@Url.Action("Buscar", "Inmueble")',
+        onSeleccionar: function (item) {
+        document.getElementById('montoPorDiaDisplay').value =
+        new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.precio);
+        }
         });
     </script>
 }

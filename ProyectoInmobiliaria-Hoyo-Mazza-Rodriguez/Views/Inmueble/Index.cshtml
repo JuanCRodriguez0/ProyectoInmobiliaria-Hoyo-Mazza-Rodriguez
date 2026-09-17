@@ -1,4 +1,4 @@
-@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.PaginadoResultado<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
 
 @{
     ViewData["Title"] = "Inmuebles";
@@ -7,17 +7,28 @@
 <h1>Inmuebles</h1>
 
 <div class="btn-group mb-3" role="group">
-    <a asp-action="Index"
+    <a asp-action="Index" asp-route-busqueda="@Model.Busqueda"
        class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == null ? "active" : "")">Todos</a>
-    <a asp-action="Index" asp-route-disponible="true"
+    <a asp-action="Index" asp-route-disponible="true" asp-route-busqueda="@Model.Busqueda"
        class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == true ? "active" : "")">Disponibles</a>
-    <a asp-action="Index" asp-route-disponible="false"
+    <a asp-action="Index" asp-route-disponible="false" asp-route-busqueda="@Model.Busqueda"
        class="btn btn-outline-secondary @(ViewBag.FiltroDisponible == false ? "active" : "")">Suspendidos</a>
 </div>
 
 <p>
     <a asp-action="Create" class="btn btn-primary">Nuevo Inmueble</a>
 </p>
+
+<form method="get" class="row g-2 mb-3">
+    <input type="hidden" name="disponible" value="@ViewBag.FiltroDisponible" />
+    <div class="col-md-4">
+        <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control"
+               placeholder="Buscar por dirección, propietario o tipo..." />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-secondary w-100">Buscar</button>
+    </div>
+</form>
 
 @if (TempData["Error"] != null)
 {
@@ -38,7 +49,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @foreach (var item in Model.Items)
         {
             <tr>
                 <td>
@@ -66,3 +77,18 @@
         }
     </tbody>
 </table>
+
+@if (Model.TotalPaginas > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int p = 1; p <= Model.TotalPaginas; p++)
+            {
+                <li class="page-item @(p == Model.PaginaActual ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pagina="@p"
+                       asp-route-busqueda="@Model.Busqueda" asp-route-disponible="@ViewBag.FiltroDisponible">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

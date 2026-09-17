@@ -96,66 +96,120 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return reservas;
         }
-        
-public List<Reserva> ObtenerVigentes()
-{
-    var reservas = new List<Reserva>();
 
-    using (var connection = new MySqlConnection(connectionString))
-    {
-        var sql = SELECT_BASE + @"
+        public List<Reserva> ObtenerVigentes()
+        {
+            var reservas = new List<Reserva>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = SELECT_BASE + @"
             WHERE r.estado = 1
               AND r.fechaDesde <= @hoy
               AND r.fechaHasta >= @hoy
             ORDER BY r.fechaHasta";
 
-        using (var command = new MySqlCommand(sql, connection))
-        {
-            command.Parameters.AddWithValue("@hoy", DateTime.Today);
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
+                using (var command = new MySqlCommand(sql, connection))
                 {
-                    reservas.Add(LeerReserva(reader));
+                    command.Parameters.AddWithValue("@hoy", DateTime.Today);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            reservas.Add(LeerReserva(reader));
+                        }
+                    }
                 }
             }
+            return reservas;
         }
-    }
-    return reservas;
-}
 
 
-public List<Reserva> ObtenerQueTerminanEn(int dias)
-{
-    var reservas = new List<Reserva>();
+        public List<Reserva> ObtenerQueTerminanEn(int dias)
+        {
+            var reservas = new List<Reserva>();
 
-    using (var connection = new MySqlConnection(connectionString))
-    {
-        var sql = SELECT_BASE + @"
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = SELECT_BASE + @"
             WHERE r.estado = 1
               AND r.terminada = 0
               AND r.fechaHasta BETWEEN @hoy AND @limite
             ORDER BY r.fechaHasta";
 
-        using (var command = new MySqlCommand(sql, connection))
-        {
-            command.Parameters.AddWithValue("@hoy", DateTime.Today);
-            command.Parameters.AddWithValue("@limite", DateTime.Today.AddDays(dias));
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
+                using (var command = new MySqlCommand(sql, connection))
                 {
-                    reservas.Add(LeerReserva(reader));
+                    command.Parameters.AddWithValue("@hoy", DateTime.Today);
+                    command.Parameters.AddWithValue("@limite", DateTime.Today.AddDays(dias));
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            reservas.Add(LeerReserva(reader));
+                        }
+                    }
                 }
             }
+            return reservas;
         }
-    }
-    return reservas;
-}
 
-        
+        public PaginadoResultado<Reserva> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda)
+        {
+            var resultado = new PaginadoResultado<Reserva>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina,
+                Busqueda = busqueda
+            };
+            var reservas = new List<Reserva>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var where = "WHERE r.estado = 1";
+                if (!string.IsNullOrWhiteSpace(busqueda))
+                    where += " AND (q.nombre LIKE @busqueda OR q.apellido LIKE @busqueda OR i.direccion LIKE @busqueda)";
+
+                var sqlCount = $@"SELECT COUNT(*)
+                          FROM reservas r
+                          INNER JOIN inquilinos q ON r.idInquilino = q.idInquilino
+                          INNER JOIN inmuebles i ON r.idInmueble = i.idInmueble
+                          {where}";
+
+                var sqlDatos = SELECT_BASE + $@" {where}
+                          ORDER BY r.fechaDesde DESC
+                          LIMIT @tamanio OFFSET @offset";
+
+                connection.Open();
+
+                using (var comandoCount = new MySqlCommand(sqlCount, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) comandoCount.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
+                using (var command = new MySqlCommand(sqlDatos, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) command.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            reservas.Add(LeerReserva(reader));
+                        }
+                    }
+                }
+            }
+
+            resultado.Items = reservas;
+            return resultado;
+        }
+
+
         public int Alta(Reserva reserva, int? idUsuarioCreador = null)
         {
             if (reserva.FechaHasta <= reserva.FechaDesde)
@@ -168,7 +222,7 @@ public List<Reserva> ObtenerQueTerminanEn(int dias)
 
             using (var connection = new MySqlConnection(connectionString))
             {
-                
+
                 var sql = @"INSERT INTO reservas
                                 (idInquilino, idInmueble, montoPorDia, fechaDesde, fechaHasta,
                                  fechaHastaOriginal, idUsuarioCreador, idReservaOrigen, terminada, estado)
@@ -302,7 +356,7 @@ public List<Reserva> ObtenerQueTerminanEn(int dias)
                     {
                         Reserva reserva;
 
-                        
+
                         using (var comandoSelect = new MySqlCommand(
                             @"SELECT idReserva, idInquilino, idInmueble, montoPorDia, fechaDesde,
                                      fechaHasta, fechaHastaOriginal, terminada
@@ -343,7 +397,7 @@ public List<Reserva> ObtenerQueTerminanEn(int dias)
 
                         var multa = CalcularMulta(reserva, fechaTerminacionEfectiva);
 
-                        
+
                         using (var comandoPago = new MySqlCommand(
                             @"INSERT INTO pagos (idReserva, concepto, fechaPago, importe, anulado, idUsuarioCreador)
                               VALUES (@idReserva, @concepto, @fechaPago, @importe, 0, @idUsuario)",
@@ -357,7 +411,7 @@ public List<Reserva> ObtenerQueTerminanEn(int dias)
                             comandoPago.ExecuteNonQuery();
                         }
 
-                        
+
                         using (var comandoUpdate = new MySqlCommand(
                             @"UPDATE reservas
                               SET terminada = 1,

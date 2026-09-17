@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
@@ -21,34 +20,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 
         private int UsuarioActualId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        private void CargarListas()
-        {
-            ViewBag.Inquilinos = repositorioInquilino.ObtenerTodos()
-                .Select(i => new SelectListItem
-                {
-                    Value = i.IdInquilino.ToString(),
-                    Text = $"{i.Dni} - {i.Nombre} {i.Apellido}"
-                })
-                .ToList();
-
-            var inmuebles = repositorioInmueble.ObtenerTodos();
-
-            ViewBag.InmueblesConPrecio = inmuebles;
-
-            ViewBag.Inmuebles = inmuebles
-                .Select(i => new SelectListItem
-                {
-                    Value = i.IdInmueble.ToString(),
-                    Text = $"{i.Direccion} ({i.DescripcionTipo}) - {i.PrecioPorDia:C}/día"
-                })
-                .ToList();
-        }
-
         // GET: Reserva
-        public IActionResult Index()
+        public IActionResult Index(int pagina = 1, string? busqueda = null)
         {
-            var lista = repositorioReserva.ObtenerTodos();
-            return View(lista);
+            const int tamanioPagina = 10;
+            var resultado = repositorioReserva.ObtenerPaginado(pagina, tamanioPagina, busqueda);
+            return View(resultado);
         }
 
         // GET: Reserva/Details/5
@@ -66,7 +43,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         // GET: Reserva/Create
         public IActionResult Create()
         {
-            CargarListas();
             return View();
         }
 
@@ -96,7 +72,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                     ModelState.AddModelError(string.Empty, ex.Message);
                 }
             }
-            CargarListas();
             return View(reserva);
         }
 
@@ -108,7 +83,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 return NotFound();
             }
-            CargarListas();
             return View(reserva);
         }
 
@@ -136,7 +110,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                     ModelState.AddModelError(string.Empty, ex.Message);
                 }
             }
-            CargarListas();
             return View(reserva);
         }
 
@@ -162,7 +135,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        
         public IActionResult Terminar(int id, DateTime? fechaEfectiva)
         {
             var reserva = repositorioReserva.ObtenerPorId(id);
@@ -179,7 +151,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
 
             var fecha = fechaEfectiva?.Date ?? DateTime.Today;
 
-          
             if (fecha < reserva.FechaDesde.Date) fecha = reserva.FechaDesde.Date;
             if (fecha >= reserva.FechaHastaOriginal.Date) fecha = reserva.FechaHastaOriginal.Date.AddDays(-1);
 
@@ -189,9 +160,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             return View(reserva);
         }
 
-        
-        /// POST: Reserva/Terminar/5
-      
         [HttpPost, ActionName("Terminar")]
         [ValidateAntiForgeryToken]
         public IActionResult TerminarConfirmado(int id, DateTime fechaEfectiva, bool confirmaPago)
@@ -222,7 +190,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 }
             }
 
-         
             ViewBag.FechaEfectiva = fechaEfectiva.Date;
             ViewBag.MultaCalculada = repositorioReserva.CalcularMulta(reserva, fechaEfectiva.Date);
             return View(reserva);
@@ -237,7 +204,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 return NotFound();
             }
 
-           
             var inmueble = repositorioInmueble.ObtenerPorId(original.IdInmueble);
             var nuevaFechaDesde = original.FechaHasta.Date.AddDays(1);
 
@@ -266,7 +232,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 return NotFound();
             }
 
-           
             reserva.IdInquilino = original.IdInquilino;
             reserva.IdInmueble = original.IdInmueble;
             reserva.IdReservaOrigen = original.IdReserva;

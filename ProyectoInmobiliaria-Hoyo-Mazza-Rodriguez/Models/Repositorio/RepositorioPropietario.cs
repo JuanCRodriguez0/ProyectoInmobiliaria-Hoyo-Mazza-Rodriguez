@@ -169,5 +169,104 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return res;
         }
+
+        public PaginadoResultado<Propietario> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda)
+        {
+            var resultado = new PaginadoResultado<Propietario>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina,
+                Busqueda = busqueda
+            };
+            var propietarios = new List<Propietario>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var where = "WHERE Estado = 1";
+                if (!string.IsNullOrWhiteSpace(busqueda))
+                    where += " AND (Nombre LIKE @busqueda OR Apellido LIKE @busqueda OR Dni LIKE @busqueda)";
+
+                var sqlCount = $"SELECT COUNT(*) FROM propietarios {where}";
+                var sqlDatos = $@"SELECT IdPropietario, Dni, Nombre, Apellido, FechaNacimiento, Direccion, Telefono, Email
+                          FROM propietarios {where}
+                          ORDER BY Apellido, Nombre
+                          LIMIT @tamanio OFFSET @offset";
+
+                connection.Open();
+
+                using (var comandoCount = new MySqlCommand(sqlCount, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) comandoCount.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
+                using (var command = new MySqlCommand(sqlDatos, connection))
+                {
+                    if (!string.IsNullOrWhiteSpace(busqueda)) command.Parameters.AddWithValue("@busqueda", $"%{busqueda}%");
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            propietarios.Add(new Propietario
+                            {
+                                IdPropietario = reader.GetInt32("IdPropietario"),
+                                Dni = reader.GetString("Dni"),
+                                Nombre = reader.GetString("Nombre"),
+                                Apellido = reader.GetString("Apellido"),
+                                FechaNacimiento = reader.GetDateTime("FechaNacimiento"),
+                                Direccion = reader.GetString("Direccion"),
+                                Telefono = reader.GetString("Telefono"),
+                                Email = reader.GetString("Email")
+                            });
+                        }
+                    }
+                }
+            }
+
+            resultado.Items = propietarios;
+            return resultado;
+        }
+
+        public List<Propietario> BuscarPorTexto(string term, int limite = 10)
+        {
+            var propietarios = new List<Propietario>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = @"SELECT IdPropietario, Dni, Nombre, Apellido, FechaNacimiento, Direccion, Telefono, Email
+                    FROM propietarios
+                    WHERE Estado = 1 AND (Nombre LIKE @term OR Apellido LIKE @term OR Dni LIKE @term)
+                    ORDER BY Apellido, Nombre
+                    LIMIT @limite";
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@term", $"%{term}%");
+                    command.Parameters.AddWithValue("@limite", limite);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            propietarios.Add(new Propietario
+                            {
+                                IdPropietario = reader.GetInt32("IdPropietario"),
+                                Dni = reader.GetString("Dni"),
+                                Nombre = reader.GetString("Nombre"),
+                                Apellido = reader.GetString("Apellido"),
+                                FechaNacimiento = reader.GetDateTime("FechaNacimiento"),
+                                Direccion = reader.GetString("Direccion"),
+                                Telefono = reader.GetString("Telefono"),
+                                Email = reader.GetString("Email")
+                            });
+                        }
+                    }
+                }
+            }
+            return propietarios;
+        }
     }
 }
