@@ -1,0 +1,162 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Pago
+
+@{
+    ViewData["Title"] = "Detalle del pago";
+}
+
+<div class="container mt-4">
+
+    <h2>Detalle del pago</h2>
+
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <dl class="row">
+
+
+                <dt class="col-sm-3">
+                    ID del pago
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.IdPago
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Reserva
+                </dt>
+
+                <dd class="col-sm-9">
+                    #@Model.IdReserva
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Inquilino
+                </dt>
+
+                <dd class="col-sm-9">
+                    @(Model.NombreInquilino ?? "No disponible")
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Inmueble
+                </dt>
+
+                <dd class="col-sm-9">
+                    @(Model.DireccionInmueble ?? "No disponible")
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Concepto
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.Concepto
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Fecha de pago
+                </dt>
+
+                <dd class="col-sm-9">
+                    @Model.FechaPago.ToString("dd/MM/yyyy")
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Importe
+                </dt>
+
+                <dd class="col-sm-9">
+                    $ @Model.Importe.ToString("N2")
+                </dd>
+
+
+                <dt class="col-sm-3">
+                    Estado
+                </dt>
+
+                <dd class="col-sm-9">
+
+                    @if (Model.Anulado)
+                    {
+                        <span class="badge bg-danger">
+                            Anulado
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">
+                            Vigente
+                        </span>
+                    }
+
+                </dd>
+
+            </dl>
+
+
+            @if (User.IsInRole("Administrador"))
+            {
+                <hr />
+
+                <h5>Auditoría</h5>
+
+                <dl class="row">
+
+                    <dt class="col-sm-3">
+                        Creado por
+                    </dt>
+
+                    <dd class="col-sm-9">
+                        @(Model.NombreCreador ?? "No disponible")
+                    </dd>
+
+
+                    @if (Model.Anulado)
+                    {
+                        <dt class="col-sm-3">
+                            Anulado por
+                        </dt>
+
+                        <dd class="col-sm-9">
+                            @(Model.NombreAnulador ?? "No disponible")
+                        </dd>
+                    }
+
+                </dl>
+            }
+
+        </div>
+
+    </div>
+
+
+    <div class="mt-4">
+
+        <a asp-action="Index"
+           asp-route-idReserva="@Model.IdReserva"
+           class="btn btn-secondary">
+            Volver
+        </a>
+
+
+        @if (!Model.Anulado)
+        {
+            <a asp-action="Edit"
+               asp-route-id="@Model.IdPago"
+               class="btn btn-warning">
+                Editar concepto
+            </a>
+        }
+
+    </div>
+
+</div>

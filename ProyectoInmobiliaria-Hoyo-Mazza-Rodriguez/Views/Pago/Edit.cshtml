@@ -1,0 +1,87 @@
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Pago
+
+@{
+    ViewData["Title"] = "Editar pago";
+}
+
+<div class="container mt-4">
+
+    <h2>Editar pago</h2>
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <p>
+                <strong>Pago:</strong>
+                #@Model.IdPago
+            </p>
+
+            <p>
+                <strong>Importe:</strong>
+                $ @Model.Importe.ToString("N2")
+            </p>
+
+            <p>
+                <strong>Fecha:</strong>
+                @Model.FechaPago.ToString("dd/MM/yyyy")
+            </p>
+
+            <div class="alert alert-info mb-0">
+                El importe y la fecha no pueden modificarse.
+                Solo puede editarse el concepto.
+            </div>
+
+        </div>
+
+    </div>
+
+    <form asp-action="Edit"
+          asp-route-id="@Model.IdPago"
+          method="post">
+
+        <input type="hidden"
+               asp-for="IdPago" />
+
+        <input type="hidden"
+               asp-for="IdReserva" />
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3">
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Concepto"
+                   class="form-label">
+            </label>
+
+            <input asp-for="Concepto"
+                   class="form-control" />
+
+            <span asp-validation-for="Concepto"
+                  class="text-danger">
+            </span>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-success">
+            Guardar cambios
+        </button>
+
+        <a asp-action="Index"
+           asp-route-idReserva="@Model.IdReserva"
+           class="btn btn-secondary">
+            Cancelar
+        </a>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -59,6 +59,13 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             return View(reserva);
         }
 
+        // GET: Reserva/Create
+        public IActionResult Create()
+        {
+            CargarListas();
+            return View();
+        }
+
         // POST: Reserva/Create
         [HttpPost]
         [ValidateAntiForgeryToken]

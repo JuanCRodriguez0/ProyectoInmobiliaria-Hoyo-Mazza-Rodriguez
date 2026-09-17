@@ -10,6 +10,8 @@
     <a asp-action="Create" class="btn btn-primary">Nueva Reserva</a>
 </p>
 
+
+
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
@@ -39,6 +41,7 @@
                     <a asp-action="Details" asp-route-id="@item.IdReserva" class="btn btn-sm btn-info">Detalles</a>
                     <a asp-action="Edit" asp-route-id="@item.IdReserva" class="btn btn-sm btn-warning">Editar</a>
                     <a asp-action="Delete" asp-route-id="@item.IdReserva" class="btn btn-sm btn-danger">Eliminar</a>
+                    <a asp-controller="Pago" asp-action="Index" asp-route-idReserva="@item.IdReserva" class="btn btn-sm btn-success">Pagos</a>
                 </td>
             </tr>
         }

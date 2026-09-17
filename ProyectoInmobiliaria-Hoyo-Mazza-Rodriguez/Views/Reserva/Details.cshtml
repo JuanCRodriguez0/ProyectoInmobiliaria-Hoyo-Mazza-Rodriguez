@@ -32,3 +32,4 @@
 
 <a asp-action="Edit" asp-route-id="@Model.IdReserva" class="btn btn-warning">Editar</a>
 <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>
+<a asp-controller="Pago" asp-action="Index" asp-route-idReserva="@Model.IdReserva" class="btn btn-success">Ver pagos</a>

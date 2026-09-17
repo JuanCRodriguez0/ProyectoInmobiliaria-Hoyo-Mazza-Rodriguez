@@ -1,0 +1,204 @@
+@model IEnumerable<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Pago>
+
+@{
+    ViewData["Title"] = "Pagos de la reserva";
+
+    var reserva = ViewBag.Reserva as ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva;
+
+    int pagina = ViewBag.Pagina ?? 1;
+    int totalPaginas = ViewBag.TotalPaginas ?? 1;
+    int totalRegistros = ViewBag.TotalRegistros ?? 0;
+    decimal totalPagado = ViewBag.TotalPagado ?? 0m;
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Pagos de la reserva</h2>
+
+            @if (reserva != null)
+            {
+                <p class="text-muted mb-0">
+                    Reserva #@reserva.IdReserva
+                </p>
+            }
+        </div>
+
+        <a asp-controller="Pago" asp-action="Create" asp-route-idReserva="@reserva?.IdReserva" class="btn btn-primary">
+            + Nuevo pago
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <strong>Inquilino</strong>
+                    <p>
+                        @(reserva?.NombreInquilino ?? "No especificado")
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Inmueble</strong>
+                    <p>
+                        @(reserva?.DireccionInmueble ?? "No especificado")
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Total pagado</strong>
+                    <p class="fs-5">
+                        $ @totalPagado.ToString("N2")
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Esta reserva todavía no tiene pagos registrados.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+
+            <table class="table table-striped table-bordered align-middle">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Fecha</th>
+                        <th>Importe</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var pago in Model)
+                    {
+                        <tr>
+
+                            <td>
+                                @pago.Concepto
+                            </td>
+
+                            <td>
+                                @pago.FechaPago.ToString("dd/MM/yyyy")
+                            </td>
+
+                            <td>
+                                $ @pago.Importe.ToString("N2")
+                            </td>
+
+                            <td>
+
+                                @if (pago.Anulado)
+                                {
+                                    <span class="badge bg-danger">
+                                        Anulado
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">
+                                        Vigente
+                                    </span>
+                                }
+
+                            </td>
+
+                            <td>
+
+                                <a asp-action="Details" asp-route-id="@pago.IdPago" class="btn btn-sm btn-info">
+                                    Ver
+                                </a>
+
+                                @if (!pago.Anulado)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@pago.IdPago" class="btn btn-sm btn-warning">
+                                        Editar
+                                    </a>
+
+                                    @if (User.IsInRole("Administrador"))
+                                    {
+                                        <a asp-action="Anular" asp-route-id="@pago.IdPago" class="btn btn-sm btn-danger">
+                                            Anular
+                                        </a>
+                                    }
+                                }
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+
+            <span>
+                Página @pagina de @totalPaginas
+                (@totalRegistros registros)
+            </span>
+
+            <div>
+
+                @if (pagina > 1)
+                {
+                    <a asp-action="Index" asp-route-idReserva="@reserva?.IdReserva" asp-route-pagina="@(pagina - 1)"
+                       class="btn btn-secondary">
+                        Anterior
+                    </a>
+                }
+
+                @if (pagina < totalPaginas)
+                {
+                    <a asp-action="Index" asp-route-idReserva="@reserva?.IdReserva" asp-route-pagina="@(pagina + 1)"
+                       class="btn btn-secondary">
+                        Siguiente
+                    </a>
+                }
+
+            </div>
+
+        </div>
+    }
+
+    <div class="mt-4">
+
+        <a asp-controller="Reserva" asp-action="Details" asp-route-id="@reserva?.IdReserva" class="btn btn-secondary">
+            Volver a la reserva
+        </a>
+
+    </div>
+
+</div>
