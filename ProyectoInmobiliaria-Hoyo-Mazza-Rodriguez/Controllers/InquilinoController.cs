@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using MySql.Data.MySqlClient;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
 namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
@@ -54,10 +55,20 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Inquilino inquilino)
         {
+            if (repositorioInquilino.ExisteDni(inquilino.Dni))
+                ModelState.AddModelError(nameof(Inquilino.Dni), "Ya existe un inquilino registrado con ese DNI.");
+
             if (ModelState.IsValid)
             {
-                repositorioInquilino.Alta(inquilino);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioInquilino.Alta(inquilino);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySqlException)
+                {
+                    ModelState.AddModelError(string.Empty, "No se pudo guardar el inquilino (dato duplicado). Verifique el DNI.");
+                }
             }
             return View(inquilino);
         }
@@ -83,10 +94,20 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 return NotFound();
             }
 
+            if (repositorioInquilino.ExisteDni(inquilino.Dni, inquilino.IdInquilino))
+                ModelState.AddModelError(nameof(Inquilino.Dni), "Ya existe otro inquilino registrado con ese DNI.");
+
             if (ModelState.IsValid)
             {
-                repositorioInquilino.Modificacion(inquilino);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioInquilino.Modificacion(inquilino);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySqlException)
+                {
+                    ModelState.AddModelError(string.Empty, "No se pudo guardar el inquilino (dato duplicado). Verifique el DNI.");
+                }
             }
             return View(inquilino);
         }

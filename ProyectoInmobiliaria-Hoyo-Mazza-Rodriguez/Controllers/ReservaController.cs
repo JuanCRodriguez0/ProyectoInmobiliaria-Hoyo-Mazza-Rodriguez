@@ -56,6 +56,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 reserva.MontoPorDia = inmuebleSeleccionado.PrecioPorDia;
                 ModelState.Remove(nameof(Reserva.MontoPorDia));
+
+                if (!inmuebleSeleccionado.Disponible)
+                {
+                    ModelState.AddModelError(nameof(Reserva.IdInmueble),
+                        "Ese inmueble está suspendido por el propietario y no puede reservarse.");
+                }
             }
 
             ValidarReserva(reserva);
@@ -65,7 +71,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 try
                 {
                     repositorioReserva.Alta(reserva, UsuarioActualId);
-                    return RedirectToAction(nameof(Index));
+                    TempData["Mensaje"] = "Reserva creada correctamente.";
+                    return RedirectToAction(nameof(Details), new { id = reserva.IdReserva });
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -83,10 +90,18 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             {
                 return NotFound();
             }
+
+            if (reserva.Terminada)
+            {
+                TempData["Error"] = "No se puede editar una reserva que ya fue terminada anticipadamente.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             return View(reserva);
         }
 
         // POST: Reserva/Edit/5
+        // Solo modif fechas y monto; inquilino e inmueble fijos
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Reserva reserva)
@@ -96,6 +111,23 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 return NotFound();
             }
 
+            var original = repositorioReserva.ObtenerPorId(id);
+            if (original == null)
+            {
+                return NotFound();
+            }
+
+            if (original.Terminada)
+            {
+                TempData["Error"] = "No se puede editar una reserva que ya fue terminada anticipadamente.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            reserva.IdInquilino = original.IdInquilino;
+            reserva.IdInmueble = original.IdInmueble;
+            ModelState.Remove(nameof(Reserva.IdInquilino));
+            ModelState.Remove(nameof(Reserva.IdInmueble));
+
             ValidarReserva(reserva);
 
             if (ModelState.IsValid)
@@ -103,13 +135,17 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 try
                 {
                     repositorioReserva.Modificacion(reserva);
-                    return RedirectToAction(nameof(Index));
+                    TempData["Mensaje"] = "Reserva actualizada correctamente.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
                 catch (InvalidOperationException ex)
                 {
                     ModelState.AddModelError(string.Empty, ex.Message);
                 }
             }
+
+            reserva.NombreInquilino = original.NombreInquilino;
+            reserva.DireccionInmueble = original.DireccionInmueble;
             return View(reserva);
         }
 

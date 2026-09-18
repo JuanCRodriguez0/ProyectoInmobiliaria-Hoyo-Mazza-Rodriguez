@@ -1,11 +1,11 @@
-@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva>
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.PaginadoResultado<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Reserva>
 @{
     ViewData["Title"] = "Reservas vigentes";
 }
 
 <h1>Reservas vigentes hoy (@DateTime.Today.ToString("dd/MM/yyyy"))</h1>
 
-@if (Model.Count == 0)
+@if (Model.Items.Count == 0)
 {
     <div class="alert alert-info">No hay reservas vigentes en este momento.</div>
 }
@@ -23,7 +23,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
+            @foreach (var item in Model.Items)
             {
                 <tr>
                     <td>@item.NombreInquilino</td>
@@ -38,4 +38,18 @@ else
             }
         </tbody>
     </table>
+
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav>
+            <ul class="pagination">
+                @for (int p = 1; p <= Model.TotalPaginas; p++)
+                {
+                    <li class="page-item @(p == Model.PaginaActual ? "active" : "")">
+                        <a class="page-link" asp-action="ReservasVigentes" asp-route-pagina="@p">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
 }

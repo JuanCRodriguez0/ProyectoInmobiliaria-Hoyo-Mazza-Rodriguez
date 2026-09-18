@@ -15,10 +15,12 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
         [DataType(DataType.Password)]
         public string? ClaveNueva { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        [RegularExpression(@"^[A-Za-zÀ-ÿ'´\s]+$", ErrorMessage = "El nombre solo puede contener letras")]
         public string Nombre { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "El apellido es obligatorio")]
+        [RegularExpression(@"^[A-Za-zÀ-ÿ'´\s]+$", ErrorMessage = "El apellido solo puede contener letras")]
         public string Apellido { get; set; } = "";
 
         [Required]

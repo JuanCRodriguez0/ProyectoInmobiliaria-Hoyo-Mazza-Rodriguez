@@ -1,13 +1,16 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Data;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Helpers;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
-var builder = WebApplication.CreateBuilder(args);
+//ahora en chachos ars
+var culturaArgentina = new CultureInfo("es-AR");
+CultureInfo.DefaultThreadCurrentCulture = culturaArgentina;
+CultureInfo.DefaultThreadCurrentUICulture = culturaArgentina;
 
-Conexion.Configurar(builder.Configuration);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews(options =>
 {

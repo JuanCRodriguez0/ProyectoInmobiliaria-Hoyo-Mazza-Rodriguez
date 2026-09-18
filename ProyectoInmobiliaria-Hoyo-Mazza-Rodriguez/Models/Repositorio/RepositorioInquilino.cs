@@ -174,6 +174,21 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return res;
         }
 
+        public bool ExisteDni(string dni, int idExcluir = 0)
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sql = "SELECT COUNT(*) FROM inquilinos WHERE Dni = @dni AND IdInquilino <> @idExcluir";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@dni", dni);
+                    command.Parameters.AddWithValue("@idExcluir", idExcluir);
+                    connection.Open();
+                    return Convert.ToInt32(command.ExecuteScalar()) > 0;
+                }
+            }
+        }
+
         public PaginadoResultado<Inquilino> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda)
         {
             var resultado = new PaginadoResultado<Inquilino>

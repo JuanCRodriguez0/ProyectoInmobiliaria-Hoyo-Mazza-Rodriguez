@@ -24,10 +24,15 @@
 
     <div class="form-group">
         <label asp-for="IdTipoInmueble">Tipo</label>
-        <select asp-for="IdTipoInmueble" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Tipos, "IdTipoInmueble", "Descripcion"))">
-            <option value="">-- Seleccione --</option>
-        </select>
+        <div class="d-flex gap-2">
+            <select asp-for="IdTipoInmueble" id="selectTipo" class="form-control"
+                    asp-items="@(new SelectList(ViewBag.Tipos, "IdTipoInmueble", "Descripcion"))">
+                <option value="">-- Seleccione --</option>
+            </select>
+            <button type="button" class="btn btn-outline-secondary text-nowrap" data-bs-toggle="modal" data-bs-target="#modalNuevoTipo">
+                + Nuevo tipo
+            </button>
+        </div>
         <span asp-validation-for="IdTipoInmueble" class="text-danger"></span>
     </div>
 
@@ -39,36 +44,51 @@
 
     <div class="form-group">
         <label asp-for="Cupo"></label>
-        <input asp-for="Cupo" class="form-control" />
+        <input asp-for="Cupo" class="form-control" type="number" min="1" max="30" />
+        <small class="form-text text-muted">Cantidad máxima de personas que pueden alojarse (1 a 30).</small>
         <span asp-validation-for="Cupo" class="text-danger"></span>
     </div>
 
     <div class="form-group">
         <label asp-for="Ambientes"></label>
-        <input asp-for="Ambientes" class="form-control" />
+        <input asp-for="Ambientes" class="form-control" type="number" min="1" max="15" />
         <span asp-validation-for="Ambientes" class="text-danger"></span>
     </div>
 
     <div class="form-group">
         <label asp-for="Superficie"></label>
-        <input asp-for="Superficie" class="form-control" />
+        <input asp-for="Superficie" class="form-control" type="number" step="0.01" min="1" />
+        <small class="form-text text-muted">Superficie construida, expresada en m² aproximados.</small>
         <span asp-validation-for="Superficie" class="text-danger"></span>
     </div>
 
     <div class="form-group">
         <label asp-for="PrecioPorDia"></label>
-        <input asp-for="PrecioPorDia" class="form-control" />
+        <input asp-for="PrecioPorDia" class="form-control" type="number" step="0.01" min="1" />
+        <small class="form-text text-muted">Precio en pesos argentinos ($), por día de alquiler.</small>
         <span asp-validation-for="PrecioPorDia" class="text-danger"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Latitud"></label>
-        <input asp-for="Latitud" class="form-control" />
+        <label asp-for="PorcentajeSenia"></label>
+        <input asp-for="PorcentajeSenia" class="form-control" type="number" step="1" min="0" max="100" />
+        <span asp-validation-for="PorcentajeSenia" class="text-danger"></span>
     </div>
 
     <div class="form-group">
-        <label asp-for="Longitud"></label>
-        <input asp-for="Longitud" class="form-control" />
+        <label>Ubicación</label>
+        <div id="mapaInmueble" style="height:320px; border-radius:6px;"></div>
+        <small class="form-text text-muted">Hacé clic en el mapa (o arrastrá el marcador) para ajustar la ubicación.</small>
+        <div class="row mt-2">
+            <div class="col-md-6">
+                <label asp-for="Latitud"></label>
+                <input asp-for="Latitud" id="inputLatitud" class="form-control" readonly value="@(Model.Latitud?.ToString("F6"))" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Longitud"></label>
+                <input asp-for="Longitud" id="inputLongitud" class="form-control" readonly value="@(Model.Longitud?.ToString("F6"))" />
+            </div>
+        </div>
     </div>
 
     <div class="form-group">
@@ -107,15 +127,81 @@
     </div>
 }
 
+<div class="modal fade" id="modalNuevoTipo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo tipo de inmueble</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="inputNuevoTipo" class="form-control" placeholder="Ej: Cabaña" />
+                <div id="errorNuevoTipo" class="text-danger mt-2" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnGuardarTipo" class="btn btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="~/js/buscador-servidor.js"></script>
+    <script src="~/js/mapa-inmueble.js"></script>
     <script>
         inicializarBuscadorServidor({
-        inputId: 'inputPropietario',
-        hiddenId: 'IdPropietario',
-        listaId: 'listaPropietario',
-        url: '@Url.Action("Buscar", "Propietario")'
+            inputId: 'inputPropietario',
+            hiddenId: 'IdPropietario',
+            listaId: 'listaPropietario',
+            url: '@Url.Action("Buscar", "Propietario")'
+        });
+
+        inicializarMapaInmueble({
+            mapaId: 'mapaInmueble',
+            latId: 'inputLatitud',
+            lngId: 'inputLongitud',
+            lat: @(Model.Latitud?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-31.4167"),
+            lng: @(Model.Longitud?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-64.1833")
+        });
+
+        document.getElementById('btnGuardarTipo').addEventListener('click', function () {
+            const descripcion = document.getElementById('inputNuevoTipo').value.trim();
+            const errorDiv = document.getElementById('errorNuevoTipo');
+            errorDiv.style.display = 'none';
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const datos = new FormData();
+            datos.append('descripcion', descripcion);
+            datos.append('__RequestVerificationToken', token);
+
+            fetch('@Url.Action("CrearTipoRapido", "Inmueble")', { method: 'POST', body: datos })
+                .then(async r => {
+                    if (!r.ok) {
+                        const err = await r.json();
+                        throw new Error(err.error || 'No se pudo crear el tipo.');
+                    }
+                    return r.json();
+                })
+                .then(nuevo => {
+                    const select = document.getElementById('selectTipo');
+                    const option = document.createElement('option');
+                    option.value = nuevo.id;
+                    option.text = nuevo.descripcion;
+                    option.selected = true;
+                    select.appendChild(option);
+
+                    document.getElementById('inputNuevoTipo').value = '';
+                    var modalEl = document.getElementById('modalNuevoTipo');
+                    bootstrap.Modal.getInstance(modalEl).hide();
+                })
+                .catch(err => {
+                    errorDiv.textContent = err.message;
+                    errorDiv.style.display = 'block';
+                });
         });
     </script>
 }

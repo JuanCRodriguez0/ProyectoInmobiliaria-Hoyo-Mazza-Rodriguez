@@ -6,28 +6,25 @@
 
 <h1>Editar Reserva</h1>
 
+<div class="alert alert-info">
+    El inquilino y el inmueble de una reserva ya creada no se pueden cambiar (para no perder la trazabilidad
+    de los pagos ya registrados). Solo podés ajustar fechas y monto.
+</div>
+
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="IdReserva" />
+    <input type="hidden" asp-for="IdInquilino" />
+    <input type="hidden" asp-for="IdInmueble" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="form-group position-relative">
+    <div class="form-group">
         <label>Inquilino</label>
-        <input type="text" id="inputInquilino" class="form-control" autocomplete="off" value="@Model.NombreInquilino"
-               placeholder="Buscar por DNI, nombre o apellido..." />
-        <input type="hidden" asp-for="IdInquilino" />
-        <div id="listaInquilino" class="list-group position-absolute w-100"
-             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
-        <span asp-validation-for="IdInquilino" class="text-danger"></span>
+        <input type="text" class="form-control" value="@Model.NombreInquilino" readonly />
     </div>
 
-    <div class="form-group position-relative">
+    <div class="form-group">
         <label>Inmueble</label>
-        <input type="text" id="inputInmueble" class="form-control" autocomplete="off" value="@Model.DireccionInmueble"
-               placeholder="Buscar por dirección..." />
-        <input type="hidden" asp-for="IdInmueble" />
-        <div id="listaInmueble" class="list-group position-absolute w-100"
-             style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
-        <span asp-validation-for="IdInmueble" class="text-danger"></span>
+        <input type="text" class="form-control" value="@Model.DireccionInmueble" readonly />
     </div>
 
     <div class="form-group">
@@ -54,15 +51,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="~/js/buscador-servidor.js"></script>
-    <script>
-        inicializarBuscadorServidor({
-        inputId: 'inputInquilino', hiddenId: 'IdInquilino', listaId: 'listaInquilino',
-        url: '@Url.Action("Buscar", "Inquilino")'
-        });
-        inicializarBuscadorServidor({
-        inputId: 'inputInmueble', hiddenId: 'IdInmueble', listaId: 'listaInmueble',
-        url: '@Url.Action("Buscar", "Inmueble")'
-        });
-    </script>
 }

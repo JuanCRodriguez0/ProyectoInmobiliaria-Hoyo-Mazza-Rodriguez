@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using MySql.Data.MySqlClient;
 using ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models;
 
 namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
@@ -54,10 +55,20 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Propietario propietario)
         {
+            if (repositorioPropietario.ExisteDni(propietario.Dni))
+                ModelState.AddModelError(nameof(Propietario.Dni), "Ya existe un propietario registrado con ese DNI.");
+
             if (ModelState.IsValid)
             {
-                repositorioPropietario.Alta(propietario);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioPropietario.Alta(propietario);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySqlException)
+                {
+                    ModelState.AddModelError(string.Empty, "No se pudo guardar el propietario (dato duplicado). Verifique el DNI.");
+                }
             }
             return View(propietario);
         }
@@ -83,10 +94,21 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
                 return NotFound();
             }
 
+            //verif
+            if (repositorioPropietario.ExisteDni(propietario.Dni, propietario.IdPropietario))
+                ModelState.AddModelError(nameof(Propietario.Dni), "Ya existe otro propietario registrado con ese DNI.");
+
             if (ModelState.IsValid)
             {
-                repositorioPropietario.Modificacion(propietario);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    repositorioPropietario.Modificacion(propietario);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySqlException)
+                {
+                    ModelState.AddModelError(string.Empty, "No se pudo guardar el propietario (dato duplicado). Verifique el DNI.");
+                }
             }
             return View(propietario);
         }

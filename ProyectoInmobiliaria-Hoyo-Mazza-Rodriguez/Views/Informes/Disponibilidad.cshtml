@@ -1,4 +1,4 @@
-@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.PaginadoResultado<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.Inmueble>
 @{
     ViewData["Title"] = "Disponibilidad entre fechas";
     DateTime? desde = ViewBag.Desde;
@@ -27,7 +27,7 @@
 }
 else if (desde.HasValue && hasta.HasValue)
 {
-    @if (Model.Count == 0)
+    @if (Model.Items.Count == 0)
     {
         <div class="alert alert-info">No hay inmuebles disponibles para ese rango de fechas.</div>
     }
@@ -43,7 +43,7 @@ else if (desde.HasValue && hasta.HasValue)
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     <tr>
                         <td><a asp-controller="Inmueble" asp-action="Details" asp-route-id="@item.IdInmueble">@item.Direccion</a></td>
@@ -54,5 +54,20 @@ else if (desde.HasValue && hasta.HasValue)
                 }
             </tbody>
         </table>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav>
+                <ul class="pagination">
+                    @for (int p = 1; p <= Model.TotalPaginas; p++)
+                    {
+                        <li class="page-item @(p == Model.PaginaActual ? "active" : "")">
+                            <a class="page-link" asp-action="Disponibilidad" asp-route-pagina="@p"
+                               asp-route-desde="@desde?.ToString("yyyy-MM-dd")" asp-route-hasta="@hasta?.ToString("yyyy-MM-dd")">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
     }
 }

@@ -97,22 +97,40 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return reservas;
         }
 
-        public List<Reserva> ObtenerVigentes()
+        public PaginadoResultado<Reserva> ObtenerVigentes(int pagina, int tamanioPagina)
         {
+            var resultado = new PaginadoResultado<Reserva>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina
+            };
             var reservas = new List<Reserva>();
 
             using (var connection = new MySqlConnection(connectionString))
             {
+                connection.Open();
+                var hoy = DateTime.Today;
+
+                using (var comandoCount = new MySqlCommand(
+                    "SELECT COUNT(*) FROM reservas WHERE estado = 1 AND fechaDesde <= @hoy AND fechaHasta >= @hoy", connection))
+                {
+                    comandoCount.Parameters.AddWithValue("@hoy", hoy);
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
                 var sql = SELECT_BASE + @"
-            WHERE r.estado = 1
-              AND r.fechaDesde <= @hoy
-              AND r.fechaHasta >= @hoy
-            ORDER BY r.fechaHasta";
+                    WHERE r.estado = 1
+                      AND r.fechaDesde <= @hoy
+                      AND r.fechaHasta >= @hoy
+                    ORDER BY r.fechaHasta
+                    LIMIT @tamanio OFFSET @offset";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
-                    command.Parameters.AddWithValue("@hoy", DateTime.Today);
-                    connection.Open();
+                    command.Parameters.AddWithValue("@hoy", hoy);
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -122,27 +140,47 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     }
                 }
             }
-            return reservas;
+            resultado.Items = reservas;
+            return resultado;
         }
 
-
-        public List<Reserva> ObtenerQueTerminanEn(int dias)
+        public PaginadoResultado<Reserva> ObtenerQueTerminanEn(int dias, int pagina, int tamanioPagina)
         {
+            var resultado = new PaginadoResultado<Reserva>
+            {
+                PaginaActual = pagina < 1 ? 1 : pagina,
+                TamanioPagina = tamanioPagina
+            };
             var reservas = new List<Reserva>();
 
             using (var connection = new MySqlConnection(connectionString))
             {
+                connection.Open();
+                var hoy = DateTime.Today;
+                var limite = hoy.AddDays(dias);
+
+                using (var comandoCount = new MySqlCommand(
+                    "SELECT COUNT(*) FROM reservas WHERE estado = 1 AND terminada = 0 AND fechaHasta BETWEEN @hoy AND @limite", connection))
+                {
+                    comandoCount.Parameters.AddWithValue("@hoy", hoy);
+                    comandoCount.Parameters.AddWithValue("@limite", limite);
+                    resultado.TotalRegistros = Convert.ToInt32(comandoCount.ExecuteScalar());
+                }
+
                 var sql = SELECT_BASE + @"
-            WHERE r.estado = 1
-              AND r.terminada = 0
-              AND r.fechaHasta BETWEEN @hoy AND @limite
-            ORDER BY r.fechaHasta";
+                    WHERE r.estado = 1
+                      AND r.terminada = 0
+                      AND r.fechaHasta BETWEEN @hoy AND @limite
+                    ORDER BY r.fechaHasta
+                    LIMIT @tamanio OFFSET @offset";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
-                    command.Parameters.AddWithValue("@hoy", DateTime.Today);
-                    command.Parameters.AddWithValue("@limite", DateTime.Today.AddDays(dias));
-                    connection.Open();
+                    command.Parameters.AddWithValue("@hoy", hoy);
+                    command.Parameters.AddWithValue("@limite", limite);
+                    command.Parameters.AddWithValue("@tamanio", resultado.TamanioPagina);
+                    command.Parameters.AddWithValue("@offset", (resultado.PaginaActual - 1) * resultado.TamanioPagina);
+
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -152,7 +190,8 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     }
                 }
             }
-            return reservas;
+            resultado.Items = reservas;
+            return resultado;
         }
 
         public PaginadoResultado<Reserva> ObtenerPaginado(int pagina, int tamanioPagina, string? busqueda)
@@ -209,45 +248,115 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             return resultado;
         }
 
-
         public int Alta(Reserva reserva, int? idUsuarioCreador = null)
         {
             if (reserva.FechaHasta <= reserva.FechaDesde)
                 throw new InvalidOperationException("La fecha hasta debe ser posterior a la fecha desde.");
 
-            if (ExisteSolapamiento(reserva.IdInmueble, reserva.FechaDesde, reserva.FechaHasta))
-                throw new InvalidOperationException("El inmueble ya se encuentra reservado en esas fechas.");
-
-            int res = -1;
-
             using (var connection = new MySqlConnection(connectionString))
             {
+                connection.Open();
+                using (var transaccion = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        decimal porcentajeSenia = 0;
 
-                var sql = @"INSERT INTO reservas
+                        using (var cmdInmueble = new MySqlCommand(
+                            "SELECT disponible, estado, porcentajeSenia FROM inmuebles WHERE idInmueble = @id FOR UPDATE",
+                            connection, transaccion))
+                        {
+                            cmdInmueble.Parameters.AddWithValue("@id", reserva.IdInmueble);
+                            using (var reader = cmdInmueble.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                    throw new InvalidOperationException("El inmueble seleccionado no existe.");
+
+                                bool estado = reader.GetBoolean("estado");
+                                bool disponible = reader.GetBoolean("disponible");
+                                porcentajeSenia = reader.IsDBNull(reader.GetOrdinal("porcentajeSenia"))
+                                    ? 0 : reader.GetDecimal("porcentajeSenia");
+
+                                if (!estado)
+                                    throw new InvalidOperationException("El inmueble seleccionado ya no está disponible en el sistema.");
+                                if (!disponible)
+                                    throw new InvalidOperationException("El inmueble está suspendido por el propietario y no puede reservarse.");
+                            }
+                        }
+
+                        using (var cmdSolape = new MySqlCommand(
+                            @"SELECT COUNT(*) FROM reservas
+                              WHERE idInmueble = @idInmueble AND estado = 1
+                                AND fechaDesde <= @hasta AND fechaHasta >= @desde",
+                            connection, transaccion))
+                        {
+                            cmdSolape.Parameters.AddWithValue("@idInmueble", reserva.IdInmueble);
+                            cmdSolape.Parameters.AddWithValue("@desde", reserva.FechaDesde);
+                            cmdSolape.Parameters.AddWithValue("@hasta", reserva.FechaHasta);
+
+                            var cantidad = Convert.ToInt32(cmdSolape.ExecuteScalar());
+                            if (cantidad > 0)
+                                throw new InvalidOperationException("El inmueble ya se encuentra reservado en esas fechas.");
+                        }
+
+                        int idReservaNueva;
+                        using (var command = new MySqlCommand(
+                            @"INSERT INTO reservas
                                 (idInquilino, idInmueble, montoPorDia, fechaDesde, fechaHasta,
                                  fechaHastaOriginal, idUsuarioCreador, idReservaOrigen, terminada, estado)
-                            VALUES
+                              VALUES
                                 (@idInquilino, @idInmueble, @montoPorDia, @fechaDesde, @fechaHasta,
                                  @fechaHastaOriginal, @idUsuarioCreador, @idReservaOrigen, 0, 1);
-                            SELECT LAST_INSERT_ID();";
+                              SELECT LAST_INSERT_ID();",
+                            connection, transaccion))
+                        {
+                            command.Parameters.AddWithValue("@idInquilino", reserva.IdInquilino);
+                            command.Parameters.AddWithValue("@idInmueble", reserva.IdInmueble);
+                            command.Parameters.AddWithValue("@montoPorDia", reserva.MontoPorDia);
+                            command.Parameters.AddWithValue("@fechaDesde", reserva.FechaDesde);
+                            command.Parameters.AddWithValue("@fechaHasta", reserva.FechaHasta);
+                            command.Parameters.AddWithValue("@fechaHastaOriginal", reserva.FechaHasta);
+                            command.Parameters.AddWithValue("@idUsuarioCreador", (object?)idUsuarioCreador ?? DBNull.Value);
+                            command.Parameters.AddWithValue("@idReservaOrigen", (object?)reserva.IdReservaOrigen ?? DBNull.Value);
 
-                using (var command = new MySqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@idInquilino", reserva.IdInquilino);
-                    command.Parameters.AddWithValue("@idInmueble", reserva.IdInmueble);
-                    command.Parameters.AddWithValue("@montoPorDia", reserva.MontoPorDia);
-                    command.Parameters.AddWithValue("@fechaDesde", reserva.FechaDesde);
-                    command.Parameters.AddWithValue("@fechaHasta", reserva.FechaHasta);
-                    command.Parameters.AddWithValue("@fechaHastaOriginal", reserva.FechaHasta);
-                    command.Parameters.AddWithValue("@idUsuarioCreador", (object?)idUsuarioCreador ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@idReservaOrigen", (object?)reserva.IdReservaOrigen ?? DBNull.Value);
+                            idReservaNueva = Convert.ToInt32(command.ExecuteScalar());
+                        }
+                        reserva.IdReserva = idReservaNueva;
 
-                    connection.Open();
-                    res = Convert.ToInt32(command.ExecuteScalar());
-                    reserva.IdReserva = res;
+                        
+                        if (porcentajeSenia > 0)
+                        {
+                            var dias = (reserva.FechaHasta.Date - reserva.FechaDesde.Date).Days;
+                            var totalReserva = dias * reserva.MontoPorDia;
+                            var importeSenia = Math.Round(totalReserva * (porcentajeSenia / 100m), 2);
+
+                            if (importeSenia > 0)
+                            {
+                                using (var cmdPago = new MySqlCommand(
+                                    @"INSERT INTO pagos (idReserva, concepto, fechaPago, importe, anulado, idUsuarioCreador)
+                                      VALUES (@idReserva, @concepto, @fechaPago, @importe, 0, @idUsuario)",
+                                    connection, transaccion))
+                                {
+                                    cmdPago.Parameters.AddWithValue("@idReserva", idReservaNueva);
+                                    cmdPago.Parameters.AddWithValue("@concepto", $"Seña inicial ({porcentajeSenia:0.##}% del total)");
+                                    cmdPago.Parameters.AddWithValue("@fechaPago", DateTime.Today);
+                                    cmdPago.Parameters.AddWithValue("@importe", importeSenia);
+                                    cmdPago.Parameters.AddWithValue("@idUsuario", (object?)idUsuarioCreador ?? DBNull.Value);
+                                    cmdPago.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        transaccion.Commit();
+                        return idReservaNueva;
+                    }
+                    catch
+                    {
+                        transaccion.Rollback();
+                        throw;
+                    }
                 }
             }
-            return res;
         }
 
         public int Modificacion(Reserva reserva)
@@ -263,9 +372,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             using (var connection = new MySqlConnection(connectionString))
             {
                 var sql = @"UPDATE reservas
-                            SET idInquilino = @idInquilino,
-                                idInmueble = @idInmueble,
-                                montoPorDia = @montoPorDia,
+                            SET montoPorDia = @montoPorDia,
                                 fechaDesde = @fechaDesde,
                                 fechaHasta = @fechaHasta
                             WHERE idReserva = @id";
@@ -273,8 +380,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@id", reserva.IdReserva);
-                    command.Parameters.AddWithValue("@idInquilino", reserva.IdInquilino);
-                    command.Parameters.AddWithValue("@idInmueble", reserva.IdInmueble);
                     command.Parameters.AddWithValue("@montoPorDia", reserva.MontoPorDia);
                     command.Parameters.AddWithValue("@fechaDesde", reserva.FechaDesde);
                     command.Parameters.AddWithValue("@fechaHasta", reserva.FechaHasta);
@@ -331,6 +436,7 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
             }
             return existe;
         }
+
         public decimal CalcularMulta(Reserva reserva, DateTime fechaTerminacionEfectiva)
         {
             var diasOriginales = (reserva.FechaHastaOriginal.Date - reserva.FechaDesde.Date).Days;
@@ -355,7 +461,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                     try
                     {
                         Reserva reserva;
-
 
                         using (var comandoSelect = new MySqlCommand(
                             @"SELECT idReserva, idInquilino, idInmueble, montoPorDia, fechaDesde,
@@ -397,7 +502,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
 
                         var multa = CalcularMulta(reserva, fechaTerminacionEfectiva);
 
-
                         using (var comandoPago = new MySqlCommand(
                             @"INSERT INTO pagos (idReserva, concepto, fechaPago, importe, anulado, idUsuarioCreador)
                               VALUES (@idReserva, @concepto, @fechaPago, @importe, 0, @idUsuario)",
@@ -410,7 +514,6 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models
                             comandoPago.Parameters.AddWithValue("@idUsuario", idUsuarioTerminador);
                             comandoPago.ExecuteNonQuery();
                         }
-
 
                         using (var comandoUpdate = new MySqlCommand(
                             @"UPDATE reservas

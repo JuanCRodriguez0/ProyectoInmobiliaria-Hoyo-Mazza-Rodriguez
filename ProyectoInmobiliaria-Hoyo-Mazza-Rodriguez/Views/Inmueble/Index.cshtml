@@ -71,7 +71,15 @@
                 <td>
                     <a asp-action="Details" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-info">Detalles</a>
                     <a asp-action="Edit" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-warning">Editar</a>
-                    <a asp-action="Delete" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-danger">Eliminar</a>
+                    <form asp-action="Suspender" asp-route-id="@item.IdInmueble" asp-route-disponible="@(!item.Disponible)" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm @(item.Disponible ? "btn-outline-danger" : "btn-outline-success")">
+                            @(item.Disponible ? "Suspender" : "Reactivar")
+                        </button>
+                    </form>
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <a asp-action="Delete" asp-route-id="@item.IdInmueble" class="btn btn-sm btn-danger">Eliminar</a>
+                    }
                 </td>
             </tr>
         }

@@ -69,6 +69,39 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             return Json(resultado);
         }
 
+        [HttpGet]
+        public IActionResult BuscarDisponibles(string term, DateTime? desde, DateTime? hasta)
+        {
+            if (string.IsNullOrWhiteSpace(term) || desde == null || hasta == null || hasta < desde)
+                return Json(new object[0]);
+
+            var resultado = repositorioInmueble.BuscarDisponiblesPorTexto(term, desde.Value, hasta.Value)
+                .Select(i => new
+                {
+                    id = i.IdInmueble,
+                    text = $"{i.Direccion} ({i.DescripcionTipo}) - Cupo {i.Cupo} - {i.PrecioPorDia:C}/día",
+                    precio = i.PrecioPorDia
+                });
+
+            return Json(resultado);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CrearTipoRapido([FromForm] string descripcion)
+        {
+            if (string.IsNullOrWhiteSpace(descripcion) || descripcion.Trim().Length < 3)
+                return BadRequest(new { error = "Ingrese una descripción válida (mínimo 3 letras)." });
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(descripcion.Trim(), @"^[A-Za-zÀ-ÿ\s]+$"))
+                return BadRequest(new { error = "La descripción solo puede contener letras." });
+
+            var tipo = new TipoInmueble { Descripcion = descripcion.Trim() };
+            repositorioTipoInmueble.Alta(tipo);
+
+            return Json(new { id = tipo.IdTipoInmueble, descripcion = tipo.Descripcion });
+        }
+
         // GET: Inmueble/Details/5
         public IActionResult Details(int id)
         {
@@ -94,6 +127,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         public IActionResult Create(Inmueble inmueble, IFormFile? archivoPortada)
         {
             ModelState.Remove(nameof(Inmueble.Portada));
+
+            if (inmueble.Latitud.HasValue) inmueble.Latitud = Math.Round(inmueble.Latitud.Value, 6);
+            if (inmueble.Longitud.HasValue) inmueble.Longitud = Math.Round(inmueble.Longitud.Value, 6);
 
             if (ModelState.IsValid)
             {
@@ -129,6 +165,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
             }
 
             ModelState.Remove(nameof(Inmueble.Portada));
+
+            if (inmueble.Latitud.HasValue) inmueble.Latitud = Math.Round(inmueble.Latitud.Value, 6);
+            if (inmueble.Longitud.HasValue) inmueble.Longitud = Math.Round(inmueble.Longitud.Value, 6);
 
             if (ModelState.IsValid)
             {
@@ -201,6 +240,9 @@ namespace ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Controllers
         public IActionResult Suspender(int id, bool disponible)
         {
             repositorioInmueble.CambiarDisponibilidad(id, disponible);
+            TempData["Mensaje"] = disponible
+                ? "El inmueble vuelve a estar disponible para reservas."
+                : "El inmueble quedó suspendido: no va a aparecer para nuevas reservas.";
             return RedirectToAction(nameof(Index));
         }
     }

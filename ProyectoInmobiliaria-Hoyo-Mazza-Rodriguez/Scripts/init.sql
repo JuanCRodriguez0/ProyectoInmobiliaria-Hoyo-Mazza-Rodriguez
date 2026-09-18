@@ -62,6 +62,7 @@ CREATE TABLE inmuebles (
     ambientes       INT           NOT NULL,
     superficie      DECIMAL(10,2) NOT NULL,
     precioPorDia    DECIMAL(12,2) NOT NULL,
+    porcentajeSenia DECIMAL(5,2)  NOT NULL DEFAULT 30.00,
     latitud         DECIMAL(10,7) NULL,
     longitud        DECIMAL(10,7) NULL,
     disponible      BOOLEAN       NOT NULL DEFAULT 1,
@@ -86,7 +87,7 @@ CREATE TABLE usuarios (
     clave       VARCHAR(255) NOT NULL,
     nombre      VARCHAR(100) NOT NULL,
     apellido    VARCHAR(100) NOT NULL,
-    rol         VARCHAR(20)  NOT NULL, -- 'Administrador' o 'Empleado'
+    rol         VARCHAR(20)  NOT NULL,
     avatar      VARCHAR(300) NULL,
     estado      BOOLEAN NOT NULL DEFAULT 1,
     UNIQUE KEY uq_usuarios_email (email)
@@ -144,9 +145,9 @@ INSERT INTO inquilinos (dni, nombre, apellido, fechaNacimiento, telefono, email,
 INSERT INTO tipos_inmueble (descripcion) VALUES
 ('Casa'), ('Departamento'), ('PH'), ('Local Comercial');
 
-INSERT INTO inmuebles (idPropietario, idTipoInmueble, direccion, cupo, ambientes, superficie, precioPorDia, latitud, longitud, disponible, estado, portada) VALUES
-(1, 1, 'Av. Colon 1234, Cordoba', 6, 4, 120.50, 15000.00, -31.4167500, -64.1833400, 1, 1, NULL),
-(2, 2, 'Bv. San Juan 567, Cordoba', 3, 2, 55.00, 9000.00, -31.4200000, -64.1900000, 1, 1, NULL);
+INSERT INTO inmuebles (idPropietario, idTipoInmueble, direccion, cupo, ambientes, superficie, precioPorDia, porcentajeSenia, latitud, longitud, disponible, estado, portada) VALUES
+(1, 1, 'Av. Colon 1234, Cordoba', 6, 4, 120.50, 15000.00, 30.00, -31.4167500, -64.1833400, 1, 1, NULL),
+(2, 2, 'Bv. San Juan 567, Cordoba', 3, 2, 55.00, 9000.00, 20.00, -31.4200000, -64.1900000, 1, 1, NULL);
 
 INSERT INTO reservas (idInquilino, idInmueble, montoPorDia, fechaDesde, fechaHasta, fechaHastaOriginal) VALUES
 (1, 1, 15000.00, '2026-01-05', '2026-01-15', '2026-01-15'),

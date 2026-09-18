@@ -9,12 +9,17 @@ function inicializarBuscadorServidor(opciones) {
         lista.style.display = 'none';
     }
 
+    function obtenerUrl() {
+        return typeof opciones.url === 'function' ? opciones.url() : opciones.url;
+    }
+
     function buscar(texto) {
         if (!texto || texto.length < 2) {
             ocultarLista();
             return;
         }
-        fetch(`${opciones.url}?term=${encodeURIComponent(texto)}`)
+        const separador = obtenerUrl().includes('?') ? '&' : '?';
+        fetch(`${obtenerUrl()}${separador}term=${encodeURIComponent(texto)}`)
             .then(r => r.json())
             .then(items => {
                 lista.innerHTML = '';

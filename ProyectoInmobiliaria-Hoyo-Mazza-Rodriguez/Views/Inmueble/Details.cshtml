@@ -47,6 +47,10 @@
     <dt class="col-sm-3">Precio por día</dt>
     <dd class="col-sm-9">@Model.PrecioPorDia.ToString("C")</dd>
 
+    <dt class="col-sm-3">Seña al reservar</dt>
+    <dd class="col-sm-9">@Model.PorcentajeSenia.ToString("0.##")%</dd>
+    
+
     <dt class="col-sm-3">Disponible</dt>
     <dd class="col-sm-9">@(Model.Disponible ? "Sí" : "Suspendido por el propietario")</dd>
 
@@ -58,4 +62,14 @@
 </dl>
 
 <a asp-action="Edit" asp-route-id="@Model.IdInmueble" class="btn btn-warning">Editar</a>
+<form asp-action="Suspender" asp-route-id="@Model.IdInmueble" asp-route-disponible="@(!Model.Disponible)" method="post" class="d-inline">
+    @if (Model.Disponible)
+    {
+        <button type="submit" class="btn btn-outline-danger">Suspender oferta</button>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-outline-success">Reactivar oferta</button>
+    }
+</form>
 <a asp-action="Index" class="btn btn-secondary">Volver al listado</a>

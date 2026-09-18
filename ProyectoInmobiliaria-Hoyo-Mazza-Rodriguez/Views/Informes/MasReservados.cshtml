@@ -1,8 +1,7 @@
-@model List<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.InformeInmuebleReservas>
+@model ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.PaginadoResultado<ProyectoInmobiliaria_Hoyo_Mazza_Rodriguez.Models.InformeInmuebleReservas>
 @{
     ViewData["Title"] = "Inmuebles más reservados";
     int dias = ViewBag.Dias;
-    int top = ViewBag.Top;
 }
 
 <h1>Inmuebles más reservados</h1>
@@ -13,15 +12,11 @@
         <input type="number" name="dias" value="@dias" min="1" class="form-control" />
     </div>
     <div class="col-auto">
-        <label class="form-label">Cantidad a mostrar</label>
-        <input type="number" name="top" value="@top" min="1" class="form-control" />
-    </div>
-    <div class="col-auto">
         <button type="submit" class="btn btn-primary">Actualizar</button>
     </div>
 </form>
 
-@if (Model.Count == 0)
+@if (Model.Items.Count == 0)
 {
     <div class="alert alert-info">No hay reservas registradas en ese período.</div>
 }
@@ -37,8 +32,8 @@ else
             </tr>
         </thead>
         <tbody>
-            @{ int puesto = 1; }
-            @foreach (var item in Model)
+            @{ int puesto = (Model.PaginaActual - 1) * Model.TamanioPagina + 1; }
+            @foreach (var item in Model.Items)
             {
                 <tr>
                     <td>@puesto</td>
@@ -50,4 +45,18 @@ else
             }
         </tbody>
     </table>
+
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav>
+            <ul class="pagination">
+                @for (int p = 1; p <= Model.TotalPaginas; p++)
+                {
+                    <li class="page-item @(p == Model.PaginaActual ? "active" : "")">
+                        <a class="page-link" asp-action="MasReservados" asp-route-pagina="@p" asp-route-dias="@dias">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
 }

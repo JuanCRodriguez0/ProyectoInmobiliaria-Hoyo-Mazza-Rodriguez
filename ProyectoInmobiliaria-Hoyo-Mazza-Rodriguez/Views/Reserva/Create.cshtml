@@ -19,13 +19,26 @@
         <span asp-validation-for="IdInquilino" class="text-danger"></span>
     </div>
 
+    <div class="form-group">
+        <label asp-for="FechaDesde"></label>
+        <input asp-for="FechaDesde" id="inputFechaDesde" class="form-control" />
+        <span asp-validation-for="FechaDesde" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaHasta"></label>
+        <input asp-for="FechaHasta" id="inputFechaHasta" class="form-control" />
+        <span asp-validation-for="FechaHasta" class="text-danger"></span>
+    </div>
+
     <div class="form-group position-relative">
         <label>Inmueble</label>
-        <input type="text" id="inputInmueble" class="form-control" autocomplete="off"
-               placeholder="Buscar por dirección..." />
+        <input type="text" id="inputInmueble" class="form-control" autocomplete="off" disabled
+               placeholder="Primero completá las fechas..." />
         <input type="hidden" asp-for="IdInmueble" />
         <div id="listaInmueble" class="list-group position-absolute w-100"
              style="z-index:1000; display:none; max-height:200px; overflow-y:auto;"></div>
+        <small class="form-text text-muted">Solo se muestran inmuebles disponibles y libres en las fechas elegidas.</small>
         <span asp-validation-for="IdInmueble" class="text-danger"></span>
     </div>
 
@@ -39,18 +52,6 @@
         </small>
     </div>
 
-    <div class="form-group">
-        <label asp-for="FechaDesde"></label>
-        <input asp-for="FechaDesde" class="form-control" />
-        <span asp-validation-for="FechaDesde" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="FechaHasta"></label>
-        <input asp-for="FechaHasta" class="form-control" />
-        <span asp-validation-for="FechaHasta" class="text-danger"></span>
-    </div>
-
     <button type="submit" class="btn btn-primary">Guardar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
@@ -60,21 +61,45 @@
     <script src="~/js/buscador-servidor.js"></script>
     <script>
         inicializarBuscadorServidor({
-        inputId: 'inputInquilino',
-        hiddenId: 'IdInquilino',
-        listaId: 'listaInquilino',
-        url: '@Url.Action("Buscar", "Inquilino")'
+            inputId: 'inputInquilino',
+            hiddenId: 'IdInquilino',
+            listaId: 'listaInquilino',
+            url: '@Url.Action("Buscar", "Inquilino")'
         });
 
-        inicializarBuscadorServidor({
-        inputId: 'inputInmueble',
-        hiddenId: 'IdInmueble',
-        listaId: 'listaInmueble',
-        url: '@Url.Action("Buscar", "Inmueble")',
-        onSeleccionar: function (item) {
-        document.getElementById('montoPorDiaDisplay').value =
-        new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.precio);
+        const inputInmueble = document.getElementById('inputInmueble');
+        const inputDesde = document.getElementById('inputFechaDesde');
+        const inputHasta = document.getElementById('inputFechaHasta');
+
+        function fechasCompletas() {
+            return inputDesde.value && inputHasta.value && inputHasta.value >= inputDesde.value;
         }
+
+        function actualizarEstadoInmueble() {
+            if (fechasCompletas()) {
+                inputInmueble.disabled = false;
+                inputInmueble.placeholder = 'Buscar por dirección...';
+            } else {
+                inputInmueble.disabled = true;
+                inputInmueble.placeholder = 'Primero completá las fechas...';
+                inputInmueble.value = '';
+                document.getElementById('IdInmueble').value = '';
+                document.getElementById('montoPorDiaDisplay').value = '';
+            }
+        }
+
+        inputDesde.addEventListener('change', actualizarEstadoInmueble);
+        inputHasta.addEventListener('change', actualizarEstadoInmueble);
+
+        inicializarBuscadorServidor({
+            inputId: 'inputInmueble',
+            hiddenId: 'IdInmueble',
+            listaId: 'listaInmueble',
+            url: () => `@Url.Action("BuscarDisponibles", "Inmueble")&desde=${inputDesde.value}&hasta=${inputHasta.value}`,
+            onSeleccionar: function (item) {
+                document.getElementById('montoPorDiaDisplay').value =
+                    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.precio);
+            }
         });
     </script>
 }
